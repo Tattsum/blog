@@ -185,17 +185,17 @@ blog/
 │       └── ai.proto
 ├── backend/           # Go API（connect-go）※実装時
 │   ├── cmd/server/
-│   ├── internal/
-│   └── go.mod
+│   └── internal/
 ├── frontend/          # Next.js アプリ ※実装時
 │   ├── app/
 │   ├── package.json
 │   └── ...
 ├── .markdownlint.json       # markdownlint ルール
 ├── .markdownlint-cli2.jsonc # markdownlint-cli2 の glob 設定
+├── buf.gen.yaml       # buf コード生成設定
+├── buf.yaml           # buf 設定
+├── go.mod             # Go モジュール（monorepo 全体）
 ├── package.json       # ルート（Markdown lint 等）
-├── buf.gen.yaml       # buf コード生成設定 ※追加予定
-├── buf.yaml           # buf 設定 ※追加予定
 └── README.md
 ```
 
