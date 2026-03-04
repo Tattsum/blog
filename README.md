@@ -20,7 +20,7 @@
 - **永続化**: Cloud SQL (MySQL)
 - **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由のみ）
 
-詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md) を参照。
+詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。
 
 ---
 
@@ -85,6 +85,12 @@ go run ./cmd/server
 
 ```bash
 docker run -d --name blog-mysql -e MYSQL_ROOT_PASSWORD=local -e MYSQL_DATABASE=blog -p 3306:3306 mysql:8.4
+```
+
+- 初回は DB マイグレーションを実行する（[golang-migrate](https://github.com/golang-migrate/migrate) をインストール後）:
+
+```bash
+migrate -path backend/db/migrations -database "mysql://root:local@tcp(localhost:3306)/blog" up
 ```
 
 ### 4.5 フロントエンドの起動
@@ -180,19 +186,23 @@ pnpm build
 ```text
 blog/
 ├── .vscode/           # エディタ設定・推奨拡張
-├── docs/              # 設計・API 仕様・ADR
+├── docs/              # 設計・API 仕様・ADR・実装プラン
 │   ├── adr/
 │   ├── architecture.md
-│   └── api-specification.md
+│   ├── api-specification.md
+│   └── implementation-plan.md
 ├── proto/             # Protocol Buffers 定義
 │   └── blog/v1/
 │       ├── post.proto
 │       ├── tag.proto
 │       ├── auth.proto
 │       └── ai.proto
-├── backend/           # Go API（connect-go）※実装時
+├── backend/           # Go API（connect-go）
 │   ├── cmd/server/
+│   ├── db/migrations/ # DB マイグレーション（golang-migrate）
 │   └── internal/
+│       ├── domain/    # ドメイン層（post, tag, user, repository IF）
+│       └── infrastructure/mysql/  # リポジトリ実装
 ├── frontend/          # Next.js アプリ ※実装時
 │   ├── app/
 │   ├── package.json
@@ -207,7 +217,7 @@ blog/
 └── README.md
 ```
 
-現時点では `proto/` と `docs/` が存在し、`backend/` と `frontend/` は実装に合わせて追加する想定。
+`backend/` はドメイン層・インフラ層まで実装済み。`frontend/` は未作成。
 
 ---
 

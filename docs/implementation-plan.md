@@ -32,17 +32,14 @@
 ## フェーズ 1: ドメインモデリングとリポジトリ層
 
 - **ドメインモデル定義（Go）**
-  - `internal/domain/post`, `internal/domain/tag`, `internal/domain/user` などのパッケージを定義。
-  - Post/Tag/User エンティティと値オブジェクト（Slug、Email 等）、ドメインサービス（公開判定など）を設計。
+  - `backend/internal/domain/post`, `domain/tag`, `domain/user` を定義済み。Post/Tag/User エンティティ、Slug/Email 値オブジェクト、Post の公開判定（IsPublished / Publish / Unpublish）を実装。
 - **リポジトリインターフェース**
-  - DDD のリポジトリとして `PostRepository`, `TagRepository`, `UserRepository` のインターフェースを `internal/domain` または `internal/application` に定義。
+  - `backend/internal/domain/repository` に `PostRepository`, `TagRepository`, `UserRepository`, `Clock` を定義済み。
 - **MySQL 実装**
-  - `internal/infrastructure/mysql` に各リポジトリ実装を追加。
-  - マイグレーションツール（例: `golang-migrate`）を導入し、`db/migrations` にスキーマを管理。
-  - パフォーマンスを意識して主なクエリにはインデックスを設計。
+  - `backend/internal/infrastructure/mysql` に各リポジトリ実装を追加済み。`backend/db/migrations` に golang-migrate 用の初期スキーマ（users, tags, posts, post_tags）を配置。
 - **テスト**
-  - ドメイン層は DB に依存しない純粋なユニットテストを追加（TDD ベースで進める）。
-  - リポジトリ層は Docker 上の MySQL を使った統合テストを追加（最小限）。
+  - ドメイン層（post）のユニットテストを追加済み。リポジトリ層の統合テストは未実装（任意）。
+- **フェーズ 1 完了条件**: ドメイン・リポジトリIF・MySQL 実装が存在し、`go test ./backend/...` および `golangci-lint run ./...` が通ること。
 
 ---
 
