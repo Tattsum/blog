@@ -3,7 +3,9 @@
   "private": true,
   "description": "個人ブログシステムのモノレポ",
   "scripts": {
-    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules/**\" \"!gen/**\""
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules/**\" \"!gen/**\"",
+    "lint:proto": "buf lint",
+    "lint:go": "golangci-lint run ./..."
   },
   "devDependencies": {
     "markdownlint-cli2": "^0.21.0"

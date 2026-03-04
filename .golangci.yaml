@@ -1,0 +1,25 @@
+# golangci-lint 設定（https://golangci-lint.run）
+# 実行: golangci-lint run ./...
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  skip-dirs:
+    - vendor
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 3
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck  # テストでは意図的に無視する場合あり

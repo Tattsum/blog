@@ -35,6 +35,7 @@
 | pnpm | 10+ | フロントエンドのパッケージ管理 |
 | Docker | 29+ | ローカル DB・Cloud Run ビルド |
 | buf | 1.66+ | Proto の lint・コード生成 |
+| golangci-lint | 最新 | Go の lint（`go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`） |
 | MySQL | 8.4 (LTS) | ローカル開発用（Docker 可） |
 
 ---
@@ -57,6 +58,9 @@ go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
 
 # buf（推奨）
 go install github.com/bufbuild/buf/cmd/buf@latest
+
+# Go の lint
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ```
 
 ### 4.3 Proto のコード生成
@@ -120,8 +124,11 @@ pnpm dev
 npm run lint:md
 
 # Proto の lint とコード生成
-buf lint
+npm run lint:proto
 buf generate
+
+# Go の lint（要: golangci-lint インストール）
+npm run lint:go
 
 # バックエンドのテスト
 cd backend && go test ./...
@@ -190,9 +197,10 @@ blog/
 │   ├── app/
 │   ├── package.json
 │   └── ...
-├── .markdownlint.json       # markdownlint ルール
+├── .golangci.yaml      # Go の lint 設定（golangci-lint）
+├── .markdownlint.json  # markdownlint ルール
 ├── .markdownlint-cli2.jsonc # markdownlint-cli2 の glob 設定
-├── buf.gen.yaml       # buf コード生成設定
+├── buf.gen.yaml        # buf コード生成設定
 ├── buf.yaml           # buf 設定
 ├── go.mod             # Go モジュール（monorepo 全体）
 ├── package.json       # ルート（Markdown lint 等）
