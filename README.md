@@ -26,14 +26,16 @@
 
 ## 3. 前提条件
 
+いずれも **2026年3月時点の最新版** を想定している。
+
 | ツール | 想定バージョン | 用途 |
 | --- | --- | --- |
-| Go | 1.23+ | バックエンド・コード生成 |
-| Node.js | 20+ (LTS) | フロントエンド・ビルド |
-| pnpm | 9+ | フロントエンドのパッケージ管理 |
-| Docker | 24+ | ローカル DB・Cloud Run ビルド |
-| buf | 1.x | Proto の lint・コード生成 |
-| MySQL | 8.x | ローカル開発用（Docker 可) |
+| Go | 1.26+ | バックエンド・コード生成 |
+| Node.js | 24+ (LTS) | フロントエンド・ビルド |
+| pnpm | 10+ | フロントエンドのパッケージ管理 |
+| Docker | 29+ | ローカル DB・Cloud Run ビルド |
+| buf | 1.66+ | Proto の lint・コード生成 |
+| MySQL | 8.4 (LTS) | ローカル開発用（Docker 可） |
 
 ---
 
@@ -78,7 +80,7 @@ go run ./cmd/server
 - MySQL は Docker で立てる場合の例:
 
 ```bash
-docker run -d --name blog-mysql -e MYSQL_ROOT_PASSWORD=local -e MYSQL_DATABASE=blog -p 3306:3306 mysql:8
+docker run -d --name blog-mysql -e MYSQL_ROOT_PASSWORD=local -e MYSQL_DATABASE=blog -p 3306:3306 mysql:8.4
 ```
 
 ### 4.5 フロントエンドの起動

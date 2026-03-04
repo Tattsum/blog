@@ -4,6 +4,20 @@
 
 本システムは、管理者が記事を執筆・公開し、読者が一覧・検索・本文閲覧を行う個人ブログである。Markdown ベースのコンテンツ管理と、Vertex AI (Gemini) による要約・下書き支援を提供する。フロントエンドは Cloudflare Pages、API およびバックエンドは GCP Cloud Run、データ永続化は Cloud SQL (MySQL) で運用する。
 
+### 技術スタック（2026年3月時点の最新版）
+
+| レイヤー | 技術 | バージョン |
+| --- | --- | --- |
+| フロントエンド | Next.js (TypeScript) | 16.x |
+| パッケージ管理 | pnpm | 10.x |
+| ランタイム | Node.js | 24 LTS |
+| API クライアント | @connectrpc/connect | 最新（proto から自動生成） |
+| バックエンド | Go + connect-go | Go 1.26+ |
+| Proto ツール | buf | 1.66+ |
+| DB | Cloud SQL (MySQL) | 8.4 LTS |
+| インフラ | GCP Cloud Run / Cloudflare Pages | 各サービス最新 |
+| AI | Vertex AI (Gemini) | 最新 |
+
 ---
 
 ## 2. アーキテクチャ概要図
