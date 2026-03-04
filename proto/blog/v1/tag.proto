@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package blog.v1;
+
+option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
+
+// タグ
+message Tag {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string created_at = 4;  // RFC3339
+}
+
+message ListTagsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListTagsResponse {
+  repeated Tag tags = 1;
+  int32 total_count = 2;
+}
+
+message CreateTagRequest {
+  string name = 1;
+  string slug = 2;  // 省略時は name から自動生成
+}
+
+message CreateTagResponse {
+  Tag tag = 1;
+}
+
+message DeleteTagRequest {
+  string id = 1;
+}
+
+message DeleteTagResponse {}
+
+service TagService {
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
+  rpc CreateTag(CreateTagRequest) returns (CreateTagResponse) {}
+  rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse) {}
+}

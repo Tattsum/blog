@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package blog.v1;
+
+option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string session_token = 1;  // セッション識別子
+  string expires_at = 2;     // RFC3339
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message GetMeRequest {}
+
+message GetMeResponse {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+}
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {}
+}

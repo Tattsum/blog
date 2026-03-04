@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package blog.v1;
+
+option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
+
+message SummarizeRequest {
+  string text = 1;           // 要約対象の本文
+  int32 max_sentences = 2;   // 省略時は 3
+}
+
+message SummarizeResponse {
+  string summary = 1;
+}
+
+message DraftSupportRequest {
+  string prompt = 1;        // ユーザーの指示（例: 「結論を強くして」）
+  string current_body = 2;   // 現在の本文
+}
+
+message DraftSupportResponse {
+  string suggested_body = 1;  // AI が提案する本文
+}
+
+service AIService {
+  rpc Summarize(SummarizeRequest) returns (SummarizeResponse) {}
+  rpc DraftSupport(DraftSupportRequest) returns (DraftSupportResponse) {}
+}

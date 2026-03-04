@@ -1,0 +1,44 @@
+# Environment
+.env
+.env.local
+.env.*.local
+*.local
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+gen/
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Build / Docker
+*.tar
+.cache/
+
+# Secrets
+*.pem
+*.key
+secrets/

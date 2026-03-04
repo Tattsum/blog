@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package blog.v1;
+
+option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
+
+// 記事
+message Post {
+  string id = 1;
+  string title = 2;
+  string slug = 3;
+  string body_markdown = 4;
+  string summary = 5;
+  repeated string tag_ids = 6;
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    DRAFT = 1;
+    PUBLISHED = 2;
+  }
+  Status status = 7;
+  string created_at = 8;  // RFC3339
+  string updated_at = 9;  // RFC3339
+  string published_at = 10; // RFC3339, 公開時のみ
+}
+
+message ListPostsRequest {
+  int32 page = 1;       // 1-based
+  int32 page_size = 2;   // default 20, max 100
+  string status = 3;     // "published" | "draft" | ""(all, admin only)
+}
+
+message ListPostsResponse {
+  repeated Post posts = 1;
+  int32 total_count = 2;
+}
+
+message GetPostRequest {
+  string id = 1;   // 記事ID または slug
+}
+
+message GetPostResponse {
+  Post post = 1;
+}
+
+message CreatePostRequest {
+  string title = 1;
+  string slug = 2;       // 省略時は title から自動生成
+  string body_markdown = 3;
+  string summary = 4;
+  repeated string tag_ids = 5;
+}
+
+message CreatePostResponse {
+  Post post = 1;
+}
+
+message UpdatePostRequest {
+  string id = 1;
+  optional string title = 2;
+  optional string slug = 3;
+  optional string body_markdown = 4;
+  optional string summary = 5;
+  repeated string tag_ids = 6;
+}
+
+message UpdatePostResponse {
+  Post post = 1;
+}
+
+message DeletePostRequest {
+  string id = 1;
+}
+
+message DeletePostResponse {}
+
+message SearchPostsRequest {
+  string query = 1;      // 全文検索クエリ
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message SearchPostsResponse {
+  repeated Post posts = 1;
+  int32 total_count = 2;
+}
+
+message PublishPostRequest {
+  string id = 1;
+  bool unpublish = 2;     // true で下書きに戻す
+}
+
+message PublishPostResponse {
+  Post post = 1;
+}
+
+service PostService {
+  rpc ListPosts(ListPostsRequest) returns (ListPostsResponse) {}
+  rpc GetPost(GetPostRequest) returns (GetPostResponse) {}
+  rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {}
+  rpc UpdatePost(UpdatePostRequest) returns (UpdatePostResponse) {}
+  rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {}
+  rpc SearchPosts(SearchPostsRequest) returns (SearchPostsResponse) {}
+  rpc PublishPost(PublishPostRequest) returns (PublishPostResponse) {}
+}
