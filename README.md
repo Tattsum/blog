@@ -116,6 +116,9 @@ pnpm dev
 ## 6. 開発時のよく使うコマンド
 
 ```bash
+# Markdown の lint（ルートで実行）
+npm run lint:md
+
 # Proto の lint とコード生成
 buf lint
 buf generate
@@ -169,8 +172,9 @@ pnpm build
 
 ```text
 blog/
-├── .vscode/           # エディタ設定
-├── docs/              # 設計・API 仕様
+├── .vscode/           # エディタ設定・推奨拡張
+├── docs/              # 設計・API 仕様・ADR
+│   ├── adr/
 │   ├── architecture.md
 │   └── api-specification.md
 ├── proto/             # Protocol Buffers 定義
@@ -187,6 +191,9 @@ blog/
 │   ├── app/
 │   ├── package.json
 │   └── ...
+├── .markdownlint.json       # markdownlint ルール
+├── .markdownlint-cli2.jsonc # markdownlint-cli2 の glob 設定
+├── package.json       # ルート（Markdown lint 等）
 ├── buf.gen.yaml       # buf コード生成設定 ※追加予定
 ├── buf.yaml           # buf 設定 ※追加予定
 └── README.md

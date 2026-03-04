@@ -1,0 +1,11 @@
+{
+  "name": "blog",
+  "private": true,
+  "description": "個人ブログシステムのモノレポ",
+  "scripts": {
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules/**\" \"!gen/**\""
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.21.0"
+  }
+}
