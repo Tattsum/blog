@@ -101,15 +101,15 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 		return nil, err
 	}
 	title := strings.TrimSpace(req.Msg.GetTitle())
-	if title == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("title is required"))
-	}
 	slug := strings.TrimSpace(req.Msg.GetSlug())
 	if slug == "" {
 		slug = Slugify(title)
 	}
-	if slug == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slug could not be generated from title"))
+	body := req.Msg.GetBodyMarkdown()
+	summary := req.Msg.GetSummary()
+	tagIDs := req.Msg.GetTagIds()
+	if err := validatePostFields(title, slug, body, summary, tagIDs); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	now := time.Now()
 	p := &post.Post{
@@ -147,15 +147,9 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 	}
 	if req.Msg.Title != nil {
 		p.Title = strings.TrimSpace(*req.Msg.Title)
-		if p.Title == "" {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("title cannot be empty"))
-		}
 	}
 	if req.Msg.Slug != nil {
 		p.Slug = post.Slug(strings.TrimSpace(*req.Msg.Slug))
-		if string(p.Slug) == "" {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slug cannot be empty"))
-		}
 	}
 	if req.Msg.BodyMarkdown != nil {
 		p.BodyMarkdown = *req.Msg.BodyMarkdown
@@ -165,6 +159,9 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 	}
 	if req.Msg.TagIds != nil {
 		p.TagIDs = req.Msg.TagIds
+	}
+	if err := validatePostFields(p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, p.TagIDs); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	p.UpdatedAt = time.Now()
 	if err := s.posts.Update(ctx, p); err != nil {
