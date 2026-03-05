@@ -24,8 +24,8 @@
   - `frontend/` に Next.js 16（App Router 前提）のプロジェクトを作成。
   - TypeScript / ESLint / Prettier / markdownlint 等を設定。
   - `@connectrpc/connect` / `@connectrpc/connect-web` などを追加。
-- **CI の最初の土台（任意）**
-  - GitHub Actions で `markdownlint`, `buf lint`, `go test` を最低限回すワークフローを追加（詳細は後続フェーズで拡張）。
+- **CI の最初の土台（実施済み）**
+  - `.github/workflows/ci.yml`: push/PR で `npm run lint:md`, `buf lint`, `npm run generate:proto`, `go test ./...`, `golangci-lint run ./...`, フロントエンド `npm run build` を実行。
 
 ---
 

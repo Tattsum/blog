@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: go.sum
+
+      - name: Install buf
+        uses: bufbuild/buf-setup-action@v2
+        with:
+          github_token: ${{ github.token }}
+
+      - name: Install Go proto plugins
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Markdown lint
+        run: npm run lint:md
+
+      - name: Proto lint
+        run: npm run lint:proto
+
+      - name: Generate proto (Go + TypeScript)
+        run: npm run generate:proto
+
+      - name: Go test
+        run: go test ./...
+
+      - name: Go lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run ./...
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build

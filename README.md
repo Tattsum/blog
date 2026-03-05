@@ -156,6 +156,7 @@ docker build -t blog-api -f backend/Dockerfile .
 
 ### 7.1 バックエンド（Cloud Run）
 
+- **CI（GitHub Actions）**: `main` への push および PR で `.github/workflows/ci.yml` が実行される。Markdown lint、Proto lint、proto コード生成、Go テスト、golangci-lint、フロントエンドビルドを行う。
 - リポジトリルートまたは `backend/` に `Dockerfile` を置き、Cloud Build または GitHub Actions でビルドする想定。
 
 ```bash
@@ -186,6 +187,7 @@ npm run build
 
 ```text
 blog/
+├── .github/workflows/ # CI（GitHub Actions）
 ├── .vscode/           # エディタ設定・推奨拡張
 ├── docs/              # 設計・API 仕様・ADR・実装プラン
 │   ├── adr/
