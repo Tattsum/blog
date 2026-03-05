@@ -207,7 +207,7 @@ blog/
 │       └── interface/rpc/  # Connect RPC ハンドラ（PostService, TagService）
 ├── frontend/          # Next.js アプリ（App Router）
 │   ├── src/
-│   │   ├── app/       # ルート: /, /posts/[slug], /tags, /tags/[slug], /search
+│   │   ├── app/       # ルート: /, /posts/[slug], /tags, /tags/[slug], /search, /admin, /admin/posts, /admin/posts/new, /admin/posts/[id]/edit
 │   │   ├── gen/       # proto から生成した TypeScript（buf generate）
 │   │   └── lib/       # API クライアント（Connect-Web）
 │   └── package.json

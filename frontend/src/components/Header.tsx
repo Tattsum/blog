@@ -21,6 +21,12 @@ export function Header() {
         >
           {"検索"}
         </Link>
+        <Link
+          href="/admin"
+          style={{ color: "#666", textDecoration: "underline" }}
+        >
+          {"管理"}
+        </Link>
         <form action="/search" method="get" style={{ display: "inline-flex", gap: 8 }}>
           <input
             type="search"

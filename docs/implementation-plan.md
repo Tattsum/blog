@@ -67,12 +67,14 @@
   - 記事詳細（`/posts/[slug]`）: `GetPost` で slug 指定し、`react-markdown` で本文をレンダリング。
   - タグ一覧（`/tags`）: `ListTags` でタグ一覧表示。タグ別記事一覧（`/tags/[slug]`）はプレースホルダのみ（将来拡張）。
   - 検索（`/search`）: `SearchPosts` で全文検索。共通ヘッダーに検索リンク・検索フォームを配置。
+- **管理画面（実施済み・X-Admin-Key ベース）**
+  - `/admin`: 管理者キー入力（sessionStorage に保存）。キー一致で管理メニュー表示。
+  - `/admin/posts`: 記事一覧（下書き/公開フィルタ）。ListPosts に X-Admin-Key 付与。
+  - `/admin/posts/new`: 新規記事作成（CreatePost）。タイトル・スラグ・本文（Markdown）・要約・タグ ID。
+  - `/admin/posts/[id]/edit`: 記事編集（GetPost / UpdatePost）、公開/下書き切り替え（PublishPost）、削除（DeletePost）。
+  - 共通ヘッダーに「管理」リンクを追加。
 - **今後の作業**
-  - 管理画面（ログイン・記事 CRUD・公開操作）、AI 連携 UI。
-- **管理画面**
-  - ログインフォーム（AuthService.Login）とセッション管理（Cookie or localStorage + HTTP-only Cookie）。
-  - 記事一覧（下書き/公開のフィルタ）、作成・編集画面（Markdown エディタ）。
-  - 公開/非公開切り替え（PublishPost）、削除（DeletePost）。
+  - AuthService（ログイン・セッション）への移行、AI 連携 UI。
 - **AI 連携 UI**
   - 要約生成ボタン（Summarize）: 現在の本文から要約を生成し、summary 欄に反映。
   - 下書き支援（DraftSupport）: プロンプトと本文を送信し、提案本文を差分表示して選択可能に。
