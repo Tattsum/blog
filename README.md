@@ -112,6 +112,7 @@ pnpm dev
 | --- | --- | --- | --- |
 | **バックエンド** | | | |
 | `DATABASE_DSN` | MySQL 接続文字列 | — | 必須 |
+| `ADMIN_API_KEY` | 管理者 API キー（X-Admin-Key ヘッダで照合、記事・タグの作成・更新・削除・公開に必要） | — | 管理操作時 |
 | `VERTEX_AI_PROJECT` | GCP プロジェクト ID（Vertex AI） | — | AI 利用時 |
 | `VERTEX_AI_LOCATION` | Vertex AI リージョン | `us-central1` | 任意 |
 | `SESSION_SECRET` | セッション署名用シークレット | — | 管理者認証時 |

@@ -3,22 +3,27 @@ package rpc
 import (
 	"context"
 	"errors"
+	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/Tattsum/blog/backend/internal/domain/repository"
+	"github.com/Tattsum/blog/backend/internal/domain/tag"
 	blogv1 "github.com/Tattsum/blog/gen/blog/v1"
 	"github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
+	"github.com/google/uuid"
 )
 
 // TagServer は TagService の connect-go ハンドラ実装。
 type TagServer struct {
 	blogv1connect.UnimplementedTagServiceHandler
-	tags repository.TagRepository
+	tags     repository.TagRepository
+	adminKey string
 }
 
-// NewTagServer は TagServer を返す。
-func NewTagServer(tags repository.TagRepository) *TagServer {
-	return &TagServer{tags: tags}
+// NewTagServer は TagServer を返す。adminKey が空の場合は作成・削除は PermissionDenied となる。
+func NewTagServer(tags repository.TagRepository, adminKey string) *TagServer {
+	return &TagServer{tags: tags, adminKey: adminKey}
 }
 
 // ListTags はタグ一覧を返す。
@@ -45,12 +50,46 @@ func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.Li
 	}), nil
 }
 
-// CreateTag は未実装（認証実装後に追加）。
-func (s *TagServer) CreateTag(context.Context, *connect.Request[blogv1.CreateTagRequest]) (*connect.Response[blogv1.CreateTagResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("CreateTag not yet implemented"))
+// CreateTag はタグを1件作成する。管理者キー必須。
+func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.CreateTagRequest]) (*connect.Response[blogv1.CreateTagResponse], error) {
+	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+		return nil, err
+	}
+	name := strings.TrimSpace(req.Msg.GetName())
+	if name == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("name is required"))
+	}
+	slug := strings.TrimSpace(req.Msg.GetSlug())
+	if slug == "" {
+		slug = Slugify(name)
+	}
+	if slug == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("slug could not be generated from name"))
+	}
+	now := time.Now()
+	t := &tag.Tag{
+		ID:        uuid.New().String(),
+		Name:      name,
+		Slug:      tag.Slug(slug),
+		CreatedAt: now,
+	}
+	if err := s.tags.Create(ctx, t); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&blogv1.CreateTagResponse{Tag: TagToProto(t)}), nil
 }
 
-// DeleteTag は未実装。
-func (s *TagServer) DeleteTag(context.Context, *connect.Request[blogv1.DeleteTagRequest]) (*connect.Response[blogv1.DeleteTagResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("DeleteTag not yet implemented"))
+// DeleteTag はタグを削除する。管理者キー必須。
+func (s *TagServer) DeleteTag(ctx context.Context, req *connect.Request[blogv1.DeleteTagRequest]) (*connect.Response[blogv1.DeleteTagResponse], error) {
+	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+		return nil, err
+	}
+	id := req.Msg.GetId()
+	if id == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+	}
+	if err := s.tags.Delete(ctx, id); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&blogv1.DeleteTagResponse{}), nil
 }

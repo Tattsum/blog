@@ -42,9 +42,10 @@ func main() {
 
 		postRepo := mysql.NewPostRepository(db)
 		tagRepo := mysql.NewTagRepository(db)
+		adminKey := os.Getenv("ADMIN_API_KEY")
 
-		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo))
-		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo))
+		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey))
+		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey))
 
 		mux.Handle(postPath, postHandler)
 		mux.Handle(tagPath, tagHandler)

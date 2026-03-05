@@ -46,15 +46,14 @@
 ## フェーズ 2: バックエンド API 実装（connect-go）
 
 - **サーバブートストラップ（実施済み）**
-  - `cmd/server/main.go`: `DATABASE_DSN` を読み、設定時のみ MySQL 接続・PostService/TagService ハンドラを登録。`/healthz` とセキュリティヘッダは常時有効。
-  - `backend/internal/interface/rpc`: domain→proto 変換（converter.go）、PostServer（ListPosts, GetPost 実装）、TagServer（ListTags 実装）。Create/Update/Delete/Publish/Search 等は CodeUnimplemented を返す。
+  - `cmd/server/main.go`: `DATABASE_DSN` で MySQL 接続、`ADMIN_API_KEY` を PostServer/TagServer に渡して登録。`/healthz` とセキュリティヘッダは常時有効。
+  - `backend/internal/interface/rpc`: domain→proto 変換（converter.go）、管理者キー認証（auth.go、X-Admin-Key ヘッダ）、Slugify、PostServer・TagServer の全 RPC 実装。
 - **サービスごとの実装状況**
-  - PostService: ListPosts（公開のみ／draft は PermissionDenied）、GetPost（ID または slug）実装済み。Create/Update/Delete/Search/Publish は未実装。
-  - TagService: ListTags 実装済み。Create/Delete は未実装。
+  - PostService: ListPosts / GetPost（公開のみ／draft 一覧は要認証）、CreatePost / UpdatePost / DeletePost / SearchPosts / PublishPost 実装済み（作成・更新・削除・公開は X-Admin-Key 必須）。
+  - TagService: ListTags / CreateTag / DeleteTag 実装済み（Create/Delete は X-Admin-Key 必須）。
   - AuthService / AIService: 未実装。
 - **今後の作業**
-  - 管理者認証ミドルウェアの追加と、Create/Update/Delete/Publish 等の実装。
-  - エラーハンドリングの共通化、入力バリデーションの強化。
+  - セッション／ログインベースの認証（AuthService）への移行、エラーハンドリングの共通化、入力バリデーション強化。
   - サービス層のユニットテスト・ハンドラの E2E テスト。
 
 ---
