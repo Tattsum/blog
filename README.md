@@ -66,11 +66,11 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 ### 4.3 Proto のコード生成
 
 ```bash
-# リポジトリルートで
-buf generate
+# リポジトリルートで（Go: gen/、TypeScript: frontend/src/gen）
+npm run generate:proto
 ```
 
-（`buf.gen.yaml` で `protoc-gen-go` と `protoc-gen-connect-go` の出力先を指定する想定。未設定の場合は [Connect 公式](https://connectrpc.com/docs/go/getting-started) を参照。）
+または `PATH="$(pwd)/node_modules/.bin:$PATH" buf generate`。`buf.gen.yaml` で Go と protoc-gen-es（TS）の出力先を指定している。
 
 ### 4.4 バックエンドの起動
 
@@ -97,8 +97,8 @@ migrate -path backend/db/migrations -database "mysql://root:local@tcp(localhost:
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 - ブラウザで `http://localhost:3000` を開く。
@@ -141,10 +141,10 @@ npm run lint:go
 cd backend && go test ./...
 
 # フロントエンドの開発サーバー
-cd frontend && pnpm dev
+cd frontend && npm run dev
 
 # フロントエンドのビルド（本番用）
-cd frontend && pnpm build
+cd frontend && npm run build
 
 # バックエンドのビルド（Docker 用）
 docker build -t blog-api -f backend/Dockerfile .
@@ -174,7 +174,7 @@ gcloud run deploy blog-api --image gcr.io/PROJECT_ID/blog-api --platform managed
 ```bash
 # 例: Wrangler または Cloudflare ダッシュボードから
 cd frontend
-pnpm build
+npm run build
 # 出力ディレクトリ（例: .next または out）を Cloudflare Pages にアップロード
 ```
 
@@ -205,10 +205,12 @@ blog/
 │       ├── domain/    # ドメイン層（post, tag, user, repository IF）
 │       ├── infrastructure/mysql/  # リポジトリ実装
 │       └── interface/rpc/  # Connect RPC ハンドラ（PostService, TagService）
-├── frontend/          # Next.js アプリ ※実装時
-│   ├── app/
-│   ├── package.json
-│   └── ...
+├── frontend/          # Next.js アプリ（App Router）
+│   ├── src/
+│   │   ├── app/       # ルート: /, /posts/[slug], /tags, /tags/[slug]
+│   │   ├── gen/       # proto から生成した TypeScript（buf generate）
+│   │   └── lib/       # API クライアント（Connect-Web）
+│   └── package.json
 ├── .golangci.yaml      # Go の lint 設定（golangci-lint）
 ├── .markdownlint.json  # markdownlint ルール
 ├── .markdownlint-cli2.jsonc # markdownlint-cli2 の glob 設定
@@ -219,7 +221,7 @@ blog/
 └── README.md
 ```
 
-`backend/` はドメイン層・インフラ層まで実装済み。`frontend/` は未作成。
+`backend/` はドメイン層・API ハンドラまで実装済み。`frontend/` は閲覧系（トップ・記事詳細・タグ一覧）を実装済み。
 
 ---
 

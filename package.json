@@ -3,11 +3,13 @@
   "private": true,
   "description": "個人ブログシステムのモノレポ",
   "scripts": {
-    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules/**\" \"!gen/**\"",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!node_modules/**\" \"!**/node_modules/**\" \"!gen/**\"",
     "lint:proto": "buf lint",
-    "lint:go": "golangci-lint run ./..."
+    "lint:go": "golangci-lint run ./...",
+    "generate:proto": "PATH=\"$(npm root)/.bin:$PATH\" buf generate"
   },
   "devDependencies": {
+    "@bufbuild/protoc-gen-es": "^2.11.0",
     "markdownlint-cli2": "^0.21.0"
   }
 }

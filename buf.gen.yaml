@@ -7,4 +7,8 @@ plugins:
   - local: protoc-gen-connect-go
     out: gen
     opt: paths=source_relative
+  - local: protoc-gen-es
+    out: frontend/src/gen
+    include_imports: true
+    opt: target=ts
 

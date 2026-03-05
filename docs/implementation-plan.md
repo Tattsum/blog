@@ -60,15 +60,14 @@
 
 ## フェーズ 3: フロントエンド実装（Next.js）
 
-- **基盤**
-  - App Router ベースでルーティングを設計（例: `/`, `/posts/[slug]`, `/tags/[slug]`, `/admin/posts`, `/admin/posts/[id]` など）。
-  - UI コンポーネントレイヤ（デザインシステム風の最小セット）を定義。
-  - `@connectrpc/connect-web` で API クライアントを初期化し、`NEXT_PUBLIC_API_URL` を使用。
-- **閲覧系機能**
-  - トップページ: 公開記事一覧（ページング対応）。
-  - 記事詳細ページ: slug ベースで `GetPost` を呼び出し、Markdown をレンダリング。
-  - タグ一覧 / タグ別一覧: `ListTags`, `ListPosts`（tag 絞り込みは将来の拡張でも可）。
-  - 検索: `SearchPosts` に連携した検索 UI。
+- **基盤（実施済み）**
+  - Next.js 16（App Router）を `frontend/` に作成。`buf generate` で TypeScript を `frontend/src/gen` に出力し、`@connectrpc/connect-web` で `postClient` / `tagClient` を初期化。`NEXT_PUBLIC_API_URL` で API ベース URL を指定。
+- **閲覧系機能（実施済み）**
+  - トップページ（`/`）: `ListPosts` で公開記事一覧を表示。
+  - 記事詳細（`/posts/[slug]`）: `GetPost` で slug 指定し、`react-markdown` で本文をレンダリング。
+  - タグ一覧（`/tags`）: `ListTags` でタグ一覧表示。タグ別記事一覧（`/tags/[slug]`）はプレースホルダのみ（将来拡張）。
+- **今後の作業**
+  - 検索 UI（`SearchPosts` 連携）、管理画面（ログイン・記事 CRUD・公開操作）、AI 連携 UI。
 - **管理画面**
   - ログインフォーム（AuthService.Login）とセッション管理（Cookie or localStorage + HTTP-only Cookie）。
   - 記事一覧（下書き/公開のフィルタ）、作成・編集画面（Markdown エディタ）。
