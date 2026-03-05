@@ -5,6 +5,7 @@ import type { Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PostService } from "@/gen/blog/v1/post_pb";
 import { TagService } from "@/gen/blog/v1/tag_pb";
+import { AIService } from "@/gen/blog/v1/ai_pb";
 
 const baseUrl =
   typeof window !== "undefined"
@@ -28,5 +29,6 @@ export function createAdminClients(adminKey: string) {
   return {
     postClient: createClient(PostService, transport),
     tagClient: createClient(TagService, transport),
+    aiClient: createClient(AIService, transport),
   };
 }

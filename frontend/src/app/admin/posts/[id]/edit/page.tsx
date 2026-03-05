@@ -30,8 +30,12 @@ function EditPostForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [suggestedBody, setSuggestedBody] = useState("");
 
   const client = admin?.postClient;
+  const aiClient = admin?.aiClient;
 
   useEffect(() => {
     if (!client || !id) {
@@ -111,6 +115,53 @@ function EditPostForm() {
     }
   }
 
+  async function handleSummarize() {
+    if (!aiClient) return;
+    if (!bodyMarkdown.trim()) {
+      setError("本文が空のため要約できません。");
+      return;
+    }
+    setError("");
+    setAiBusy(true);
+    try {
+      const res = await aiClient.summarize({
+        text: bodyMarkdown,
+        maxSentences: 3,
+      });
+      setSummary(res.summary ?? "");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "要約の生成に失敗しました");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleDraftSupport() {
+    if (!aiClient) return;
+    if (!bodyMarkdown.trim()) {
+      setError("本文が空のため下書き支援を実行できません。");
+      return;
+    }
+    setError("");
+    setAiBusy(true);
+    try {
+      const res = await aiClient.draftSupport({
+        prompt,
+        currentBody: bodyMarkdown,
+      });
+      setSuggestedBody(res.suggestedBody ?? "");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "下書き支援の取得に失敗しました");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  function applySuggestedBody() {
+    if (!suggestedBody) return;
+    setBodyMarkdown(suggestedBody);
+  }
+
   if (!admin?.isReady) return null;
   if (loading) return <p style={{ color: "#666" }}>読み込み中…</p>;
   if (error && !post) return <p style={{ color: "#c00" }}>{error}</p>;
@@ -160,6 +211,22 @@ function EditPostForm() {
             rows={3}
             style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
           />
+          <button
+            type="button"
+            onClick={handleSummarize}
+            disabled={submitting || aiBusy}
+            style={{
+              marginTop: 8,
+              padding: "6px 12px",
+              border: "1px solid #333",
+              borderRadius: 4,
+              background: "transparent",
+              cursor: submitting || aiBusy ? "not-allowed" : "pointer",
+              fontSize: "0.875rem",
+            }}
+          >
+            {aiBusy ? "要約生成中…" : "本文から要約を生成"}
+          </button>
         </div>
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>タグ ID（カンマ区切り）</label>
@@ -169,6 +236,64 @@ function EditPostForm() {
             onChange={(e) => setTagIds(e.target.value)}
             style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
           />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>下書き支援（AI）</label>
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="例: 結論を強くして"
+            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4, marginBottom: 8 }}
+          />
+          <button
+            type="button"
+            onClick={handleDraftSupport}
+            disabled={submitting || aiBusy}
+            style={{
+              padding: "6px 12px",
+              border: "1px solid #333",
+              borderRadius: 4,
+              background: "transparent",
+              cursor: submitting || aiBusy ? "not-allowed" : "pointer",
+              fontSize: "0.875rem",
+              marginBottom: 8,
+            }}
+          >
+            {aiBusy ? "提案取得中…" : "提案本文を取得"}
+          </button>
+          {suggestedBody && (
+            <>
+              <textarea
+                value={suggestedBody}
+                readOnly
+                rows={6}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ccc",
+                  borderRadius: 4,
+                  fontFamily: "monospace",
+                  marginBottom: 8,
+                }}
+              />
+              <button
+                type="button"
+                onClick={applySuggestedBody}
+                style={{
+                  padding: "6px 12px",
+                  border: "1px solid #333",
+                  borderRadius: 4,
+                  background: "#333",
+                  color: "#fff",
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                }}
+              >
+                提案を本文に反映
+              </button>
+            </>
+          )}
         </div>
         {error && <p style={{ color: "#c00" }}>{error}</p>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

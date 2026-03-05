@@ -19,6 +19,7 @@ type AdminContextValue = {
   isReady: boolean;
   postClient: ReturnType<typeof createAdminClients>["postClient"] | null;
   tagClient: ReturnType<typeof createAdminClients>["tagClient"] | null;
+  aiClient: ReturnType<typeof createAdminClients>["aiClient"] | null;
 };
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -57,6 +58,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     isReady: !!clients,
     postClient: clients?.postClient ?? null,
     tagClient: clients?.tagClient ?? null,
+    aiClient: clients?.aiClient ?? null,
   }), [adminKey, setAdminKey, clearAdminKey, clients]);
 
   return (

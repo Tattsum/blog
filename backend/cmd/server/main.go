@@ -46,10 +46,12 @@ func main() {
 
 		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey))
 		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey))
+		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey))
 
 		mux.Handle(postPath, postHandler)
 		mux.Handle(tagPath, tagHandler)
-		log.Print("RPC handlers registered (PostService, TagService)")
+		mux.Handle(aiPath, aiHandler)
+		log.Print("RPC handlers registered (PostService, TagService, AIService)")
 	} else {
 		log.Print("DATABASE_DSN not set; RPC handlers not registered")
 	}
