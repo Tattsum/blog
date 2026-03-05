@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tagClient } from "@/lib/api";
+import { Header } from "@/components/Header";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,21 +26,7 @@ export default async function TagSlugPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <header style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            ブログ
-          </Link>
-        </h1>
-        <nav style={{ marginTop: 8 }}>
-          <Link
-            href="/tags"
-            style={{ marginRight: 16, color: "#666", textDecoration: "underline" }}
-          >
-            {"タグ一覧"}
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: 16 }}>
         タグ: {tagName}

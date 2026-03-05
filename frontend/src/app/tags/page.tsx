@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { tagClient } from "@/lib/api";
 import type { Tag } from "@/gen/blog/v1/tag_pb";
+import { Header } from "@/components/Header";
 
 export const metadata = {
   title: "タグ一覧 | ブログ",
@@ -24,21 +25,7 @@ export default async function TagsPage() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <header style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            ブログ
-          </Link>
-        </h1>
-        <nav style={{ marginTop: 8 }}>
-          <Link
-            href="/tags"
-            style={{ marginRight: 16, color: "#666", textDecoration: "underline" }}
-          >
-            {"タグ一覧"}
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: 16 }}>
         タグ一覧

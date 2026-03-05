@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { postClient } from "@/lib/api";
+import { Header } from "@/components/Header";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -45,21 +46,7 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <header style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            ブログ
-          </Link>
-        </h1>
-        <nav style={{ marginTop: 8 }}>
-          <Link
-            href="/tags"
-            style={{ marginRight: 16, color: "#666", textDecoration: "underline" }}
-          >
-            {"タグ一覧"}
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <article>
         <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 8 }}>

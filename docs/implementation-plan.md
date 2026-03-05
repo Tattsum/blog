@@ -66,8 +66,9 @@
   - トップページ（`/`）: `ListPosts` で公開記事一覧を表示。
   - 記事詳細（`/posts/[slug]`）: `GetPost` で slug 指定し、`react-markdown` で本文をレンダリング。
   - タグ一覧（`/tags`）: `ListTags` でタグ一覧表示。タグ別記事一覧（`/tags/[slug]`）はプレースホルダのみ（将来拡張）。
+  - 検索（`/search`）: `SearchPosts` で全文検索。共通ヘッダーに検索リンク・検索フォームを配置。
 - **今後の作業**
-  - 検索 UI（`SearchPosts` 連携）、管理画面（ログイン・記事 CRUD・公開操作）、AI 連携 UI。
+  - 管理画面（ログイン・記事 CRUD・公開操作）、AI 連携 UI。
 - **管理画面**
   - ログインフォーム（AuthService.Login）とセッション管理（Cookie or localStorage + HTTP-only Cookie）。
   - 記事一覧（下書き/公開のフィルタ）、作成・編集画面（Markdown エディタ）。
