@@ -45,24 +45,17 @@
 
 ## フェーズ 2: バックエンド API 実装（connect-go）
 
-- **サーバブートストラップ**
-  - `cmd/server/main.go` で以下を実装:
-    - 環境変数読み込み（`DATABASE_DSN`, `SESSION_SECRET`, Vertex AI 関連など）。
-    - MySQL コネクション初期化（接続プール設定を含む）。
-    - ハンドラ登録（PostService, TagService, AuthService, AIService）。
-    - セキュリティヘッダ、ロギング、リクエスト ID などのミドルウェア。
-- **サービスごとの実装優先度**
-  - PostService（閲覧系から着手: ListPosts, GetPost、次に Create/Update/Delete/Publish, Search）
-  - TagService（List, Create, Delete）
-  - AuthService（Login, Logout, GetMe）
-  - AIService（Summarize, DraftSupport）※ Vertex AI 連携を含む
-- **エラーハンドリング / セキュリティ**
-  - `docs/api-specification.md` の Connect Error Codes に従い、共通エラーハンドラを実装。
-  - 管理者認証が必要な RPC にミドルウェアでガードを入れる（セッション or トークン）。
-  - 入力パラメータのバリデーション（slug 形式・長さ制限・HTML/JS インジェクション防止など）を徹底。
-- **テスト**
-  - サービス層（use case）をドメイン・リポジトリのモックで TDD する。
-  - ハンドラレベルでは HTTP/JSON モードでのエンドツーエンドテストを少数用意し、代表的なエラーケースもカバー。
+- **サーバブートストラップ（実施済み）**
+  - `cmd/server/main.go`: `DATABASE_DSN` を読み、設定時のみ MySQL 接続・PostService/TagService ハンドラを登録。`/healthz` とセキュリティヘッダは常時有効。
+  - `backend/internal/interface/rpc`: domain→proto 変換（converter.go）、PostServer（ListPosts, GetPost 実装）、TagServer（ListTags 実装）。Create/Update/Delete/Publish/Search 等は CodeUnimplemented を返す。
+- **サービスごとの実装状況**
+  - PostService: ListPosts（公開のみ／draft は PermissionDenied）、GetPost（ID または slug）実装済み。Create/Update/Delete/Search/Publish は未実装。
+  - TagService: ListTags 実装済み。Create/Delete は未実装。
+  - AuthService / AIService: 未実装。
+- **今後の作業**
+  - 管理者認証ミドルウェアの追加と、Create/Update/Delete/Publish 等の実装。
+  - エラーハンドリングの共通化、入力バリデーションの強化。
+  - サービス層のユニットテスト・ハンドラの E2E テスト。
 
 ---
 

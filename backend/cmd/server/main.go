@@ -8,6 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/Tattsum/blog/backend/internal/infrastructure/mysql"
+	"github.com/Tattsum/blog/backend/internal/interface/rpc"
+	blogv1connect "github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
 )
 
 func main() {
@@ -18,6 +22,36 @@ func main() {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
 	})
+
+	dsn := os.Getenv("DATABASE_DSN")
+	if dsn != "" {
+		db, err := mysql.NewDB(mysql.Config{
+			DSN:             dsn,
+			MaxOpenConns:    10,
+			MaxIdleConns:    5,
+			ConnMaxLifetime: time.Hour,
+		})
+		if err != nil {
+			log.Fatalf("database: %v", err)
+		}
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Printf("db close: %v", err)
+			}
+		}()
+
+		postRepo := mysql.NewPostRepository(db)
+		tagRepo := mysql.NewTagRepository(db)
+
+		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo))
+		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo))
+
+		mux.Handle(postPath, postHandler)
+		mux.Handle(tagPath, tagHandler)
+		log.Print("RPC handlers registered (PostService, TagService)")
+	} else {
+		log.Print("DATABASE_DSN not set; RPC handlers not registered")
+	}
 
 	server := &http.Server{
 		Addr:              addr,

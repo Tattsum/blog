@@ -202,7 +202,8 @@ blog/
 │   ├── db/migrations/ # DB マイグレーション（golang-migrate）
 │   └── internal/
 │       ├── domain/    # ドメイン層（post, tag, user, repository IF）
-│       └── infrastructure/mysql/  # リポジトリ実装
+│       ├── infrastructure/mysql/  # リポジトリ実装
+│       └── interface/rpc/  # Connect RPC ハンドラ（PostService, TagService）
 ├── frontend/          # Next.js アプリ ※実装時
 │   ├── app/
 │   ├── package.json
