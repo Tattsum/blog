@@ -78,24 +78,50 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	}
 
 	var count int64
-	countQuery := `SELECT COUNT(*) FROM posts WHERE 1=1`
-	countArgs := []interface{}{}
-	if filter.Status != post.StatusUnspecified {
-		countQuery += ` AND status = ?`
-		countArgs = append(countArgs, int32(filter.Status))
-	}
-	if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&count); err != nil {
-		return nil, 0, err
+	if filter.TagID != "" {
+		countQuery := `SELECT COUNT(DISTINCT p.id) FROM posts p INNER JOIN post_tags pt ON pt.post_id = p.id AND pt.tag_id = ? WHERE 1=1`
+		countArgs := []interface{}{filter.TagID}
+		if filter.Status != post.StatusUnspecified {
+			countQuery += ` AND p.status = ?`
+			countArgs = append(countArgs, int32(filter.Status))
+		}
+		if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&count); err != nil {
+			return nil, 0, err
+		}
+	} else {
+		countQuery := `SELECT COUNT(*) FROM posts WHERE 1=1`
+		countArgs := []interface{}{}
+		if filter.Status != post.StatusUnspecified {
+			countQuery += ` AND status = ?`
+			countArgs = append(countArgs, int32(filter.Status))
+		}
+		if err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&count); err != nil {
+			return nil, 0, err
+		}
 	}
 
-	listQuery := `SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts WHERE 1=1`
-	listArgs := []interface{}{}
-	if filter.Status != post.StatusUnspecified {
-		listQuery += ` AND status = ?`
-		listArgs = append(listArgs, int32(filter.Status))
+	var listQuery string
+	var listArgs []interface{}
+	if filter.TagID != "" {
+		listQuery = `SELECT p.id, p.title, p.slug, p.body_markdown, p.summary, p.status, p.created_at, p.updated_at, p.published_at
+			FROM posts p INNER JOIN post_tags pt ON pt.post_id = p.id AND pt.tag_id = ? WHERE 1=1`
+		listArgs = []interface{}{filter.TagID}
+		if filter.Status != post.StatusUnspecified {
+			listQuery += ` AND p.status = ?`
+			listArgs = append(listArgs, int32(filter.Status))
+		}
+		listQuery += ` ORDER BY p.updated_at DESC LIMIT ? OFFSET ?`
+		listArgs = append(listArgs, limit, offset)
+	} else {
+		listQuery = `SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts WHERE 1=1`
+		listArgs = []interface{}{}
+		if filter.Status != post.StatusUnspecified {
+			listQuery += ` AND status = ?`
+			listArgs = append(listArgs, int32(filter.Status))
+		}
+		listQuery += ` ORDER BY updated_at DESC LIMIT ? OFFSET ?`
+		listArgs = append(listArgs, limit, offset)
 	}
-	listQuery += ` ORDER BY updated_at DESC LIMIT ? OFFSET ?`
-	listArgs = append(listArgs, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, listQuery, listArgs...)
 	if err != nil {

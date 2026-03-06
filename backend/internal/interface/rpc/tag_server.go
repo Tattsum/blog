@@ -17,13 +17,14 @@ import (
 // TagServer は TagService の connect-go ハンドラ実装。
 type TagServer struct {
 	blogv1connect.UnimplementedTagServiceHandler
-	tags     repository.TagRepository
-	adminKey string
+	tags         repository.TagRepository
+	adminKey     string
+	sessionStore SessionStore
 }
 
-// NewTagServer は TagServer を返す。adminKey が空の場合は作成・削除は PermissionDenied となる。
-func NewTagServer(tags repository.TagRepository, adminKey string) *TagServer {
-	return &TagServer{tags: tags, adminKey: adminKey}
+// NewTagServer は TagServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
+func NewTagServer(tags repository.TagRepository, adminKey string, sessionStore SessionStore) *TagServer {
+	return &TagServer{tags: tags, adminKey: adminKey, sessionStore: sessionStore}
 }
 
 // ListTags はタグ一覧を返す。
@@ -52,7 +53,7 @@ func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.Li
 
 // CreateTag はタグを1件作成する。管理者キー必須。
 func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.CreateTagRequest]) (*connect.Response[blogv1.CreateTagResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	name := strings.TrimSpace(req.Msg.GetName())
@@ -81,7 +82,7 @@ func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.C
 
 // DeleteTag はタグを削除する。管理者キー必須。
 func (s *TagServer) DeleteTag(ctx context.Context, req *connect.Request[blogv1.DeleteTagRequest]) (*connect.Response[blogv1.DeleteTagResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	id := req.Msg.GetId()

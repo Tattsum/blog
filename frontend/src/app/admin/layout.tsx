@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminProvider } from "./AdminProvider";
 import { AdminGate } from "./AdminGate";
+import { AdminNav } from "./AdminNav";
 
 export const metadata = {
   title: "管理 | ブログ",
@@ -21,26 +22,11 @@ export default function AdminLayout({
               管理
             </Link>
           </h1>
-          <AdminGate
-            fallback={null}
-            showNavWhenReady
-          >
-            <nav style={{ marginTop: 8, display: "flex", gap: 16 }}>
-              <Link href="/admin/posts" style={{ color: "#666", textDecoration: "underline" }}>
-                {"記事一覧"}
-              </Link>
-              <Link href="/admin/posts/new" style={{ color: "#666", textDecoration: "underline" }}>
-                {"新規作成"}
-              </Link>
-              <Link href="/" style={{ color: "#666", textDecoration: "underline" }}>
-                {"サイトへ"}
-              </Link>
-            </nav>
+          <AdminGate fallback={null} showNavWhenReady>
+            <AdminNav />
           </AdminGate>
         </header>
-        <AdminGate>
-          {children}
-        </AdminGate>
+        <AdminGate>{children}</AdminGate>
       </div>
     </AdminProvider>
   );

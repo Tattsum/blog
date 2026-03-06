@@ -17,13 +17,14 @@ import (
 // PostServer は PostService の connect-go ハンドラ実装。
 type PostServer struct {
 	blogv1connect.UnimplementedPostServiceHandler
-	posts    repository.PostRepository
-	adminKey string
+	posts        repository.PostRepository
+	adminKey     string
+	sessionStore SessionStore
 }
 
-// NewPostServer は PostServer を返す。adminKey が空の場合は作成・更新・削除・公開は PermissionDenied となる。
-func NewPostServer(posts repository.PostRepository, adminKey string) *PostServer {
-	return &PostServer{posts: posts, adminKey: adminKey}
+// NewPostServer は PostServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
+func NewPostServer(posts repository.PostRepository, adminKey string, sessionStore SessionStore) *PostServer {
+	return &PostServer{posts: posts, adminKey: adminKey, sessionStore: sessionStore}
 }
 
 // ListPosts は記事一覧を返す。未認証時は status=published のみ許可。
@@ -42,7 +43,7 @@ func (s *PostServer) ListPosts(ctx context.Context, req *connect.Request[blogv1.
 	case "published", "":
 		statusFilter = post.StatusPublished
 	case "draft":
-		if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+		if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 			return nil, err
 		}
 		statusFilter = post.StatusDraft
@@ -53,6 +54,7 @@ func (s *PostServer) ListPosts(ctx context.Context, req *connect.Request[blogv1.
 		Status:   statusFilter,
 		Page:     page,
 		PageSize: pageSize,
+		TagID:    strings.TrimSpace(req.Msg.GetTagId()),
 	}
 	list, total, err := s.posts.List(ctx, filter)
 	if err != nil {
@@ -88,7 +90,7 @@ func (s *PostServer) GetPost(ctx context.Context, req *connect.Request[blogv1.Ge
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("post not found"))
 	}
 	if !p.IsPublished() {
-		if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+		if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 			return nil, err
 		}
 	}
@@ -97,7 +99,7 @@ func (s *PostServer) GetPost(ctx context.Context, req *connect.Request[blogv1.Ge
 
 // CreatePost は記事を下書きで作成する。管理者キー必須。
 func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1.CreatePostRequest]) (*connect.Response[blogv1.CreatePostResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	title := strings.TrimSpace(req.Msg.GetTitle())
@@ -131,7 +133,7 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 
 // UpdatePost は記事を更新する。管理者キー必須。
 func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1.UpdatePostRequest]) (*connect.Response[blogv1.UpdatePostResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	id := req.Msg.GetId()
@@ -172,7 +174,7 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 
 // DeletePost は記事を削除する。管理者キー必須。
 func (s *PostServer) DeletePost(ctx context.Context, req *connect.Request[blogv1.DeletePostRequest]) (*connect.Response[blogv1.DeletePostResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	id := req.Msg.GetId()
@@ -215,7 +217,7 @@ func (s *PostServer) SearchPosts(ctx context.Context, req *connect.Request[blogv
 
 // PublishPost は記事を公開または下書きに戻す。管理者キー必須。
 func (s *PostServer) PublishPost(ctx context.Context, req *connect.Request[blogv1.PublishPostRequest]) (*connect.Response[blogv1.PublishPostResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	id := req.Msg.GetId()

@@ -3,8 +3,10 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/Tattsum/blog/backend/internal/domain/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserRepository は MySQL による UserRepository の実装。
@@ -43,6 +45,30 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email user.Email) (*use
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	u.Email = user.Email(emailStr)
+	return &u, nil
+}
+
+// VerifyCredentials はメールと平文パスワードで認証する。一致時のみユーザを返す。
+func (r *UserRepository) VerifyCredentials(ctx context.Context, email user.Email, plainPassword string) (*user.User, error) {
+	var u user.User
+	var emailStr string
+	var passwordHash []byte
+	err := r.db.QueryRowContext(ctx, `SELECT id, email, display_name, password_hash FROM users WHERE email = ?`, email.String()).Scan(
+		&u.ID, &emailStr, &u.DisplayName, &passwordHash,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if err := bcrypt.CompareHashAndPassword(passwordHash, []byte(plainPassword)); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			return nil, nil
 		}
 		return nil, err

@@ -42,16 +42,20 @@ func main() {
 
 		postRepo := mysql.NewPostRepository(db)
 		tagRepo := mysql.NewTagRepository(db)
+		userRepo := mysql.NewUserRepository(db)
+		sessionStore := rpc.NewMemSessionStore()
 		adminKey := os.Getenv("ADMIN_API_KEY")
 
-		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey))
-		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey))
-		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey))
+		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))
+		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey, sessionStore))
+		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore))
+		authPath, authHandler := blogv1connect.NewAuthServiceHandler(rpc.NewAuthServer(userRepo, sessionStore, 24*time.Hour))
 
 		mux.Handle(postPath, postHandler)
 		mux.Handle(tagPath, tagHandler)
 		mux.Handle(aiPath, aiHandler)
-		log.Print("RPC handlers registered (PostService, TagService, AIService)")
+		mux.Handle(authPath, authHandler)
+		log.Print("RPC handlers registered (PostService, TagService, AIService, AuthService)")
 	} else {
 		log.Print("DATABASE_DSN not set; RPC handlers not registered")
 	}

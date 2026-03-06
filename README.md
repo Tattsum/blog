@@ -80,7 +80,7 @@ go mod download
 go run ./cmd/server
 ```
 
-- ローカルでは環境変数で DB 接続先・Vertex AI 等を指定する（セクション 5 参照）。
+- ローカルでは環境変数で DB 接続先・Vertex AI 等を指定する（セクション 5 参照）。**AuthService**（Login / GetMe / Logout）は `users` テーブルのメール・bcrypt ハッシュで認証し、セッションはメモリ上に保持。ログイン後は `Authorization: Bearer <token>` で API を呼べる。
 - MySQL は Docker で立てる場合の例:
 
 ```bash

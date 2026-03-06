@@ -12,17 +12,18 @@ import (
 // AIServer は AIService の connect-go ハンドラ実装（現状はローカルダミー実装）。
 type AIServer struct {
 	blogv1connect.UnimplementedAIServiceHandler
-	adminKey string
+	adminKey     string
+	sessionStore SessionStore
 }
 
-// NewAIServer は AIServer を返す。adminKey が空の場合は呼び出しを拒否する。
-func NewAIServer(adminKey string) *AIServer {
-	return &AIServer{adminKey: adminKey}
+// NewAIServer は AIServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
+func NewAIServer(adminKey string, sessionStore SessionStore) *AIServer {
+	return &AIServer{adminKey: adminKey, sessionStore: sessionStore}
 }
 
 // Summarize は本文の先頭から指定文数ぶんの文を抽出する簡易要約を行う。
 func (s *AIServer) Summarize(ctx context.Context, req *connect.Request[blogv1.SummarizeRequest]) (*connect.Response[blogv1.SummarizeResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	text := strings.TrimSpace(req.Msg.GetText())
@@ -39,7 +40,7 @@ func (s *AIServer) Summarize(ctx context.Context, req *connect.Request[blogv1.Su
 
 // DraftSupport は現在の本文に対して、プロンプトを前置した提案本文を返す簡易実装。
 func (s *AIServer) DraftSupport(ctx context.Context, req *connect.Request[blogv1.DraftSupportRequest]) (*connect.Response[blogv1.DraftSupportResponse], error) {
-	if err := requireAdmin(s.adminKey, req.Header()); err != nil {
+	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
 	}
 	prompt := strings.TrimSpace(req.Msg.GetPrompt())

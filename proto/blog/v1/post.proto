@@ -27,6 +27,7 @@ message ListPostsRequest {
   int32 page = 1;       // 1-based
   int32 page_size = 2;   // default 20, max 100
   string status = 3;     // "published" | "draft" | ""(all, admin only)
+  string tag_id = 4;     // 指定時はこのタグに紐づく記事のみ
 }
 
 message ListPostsResponse {

@@ -39,4 +39,3 @@ func validatePostFields(title, slug, body, summary string, tagIDs []string) erro
 	}
 	return nil
 }
-
