@@ -19,12 +19,22 @@ cp terraform.tfvars.example terraform.tfvars
 
 ### 2. 初回: イメージの push
 
-リポジトリルートで:
+**重要**: Cloud Run は **linux/amd64** のイメージのみ対応しています。M1/M2 Mac などでは `--platform linux/amd64` を付けてビルドしてください。
+
+リポジトリルートで（Makefile 使用例）:
 
 ```bash
 export GCP_PROJECT_ID=your-project-id
 export REGION=asia-northeast1
-docker build -t ${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/blog-repo/blog-api:latest -f backend/Dockerfile .
+make docker-api
+```
+
+または手動で:
+
+```bash
+export GCP_PROJECT_ID=your-project-id
+export REGION=asia-northeast1
+docker build --platform linux/amd64 -t ${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/blog-repo/blog-api:latest -f backend/Dockerfile .
 gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 docker push ${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/blog-repo/blog-api:latest
 ```

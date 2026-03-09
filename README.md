@@ -20,7 +20,7 @@
 - **永続化**: Cloud SQL (MySQL)
 - **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由のみ）を想定しつつ、現時点ではローカルロジックによるダミー要約・下書き支援を実装済み
 
-詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。
+詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。**続きの作業や引き継ぎ用**の状況まとめは [docs/handover.md](docs/handover.md) を参照。
 
 ---
 
@@ -182,10 +182,11 @@ blog/
 ├── .github/workflows/ # CI・デプロイ（GitHub Actions）
 ├── renovate.json      # 依存関係の自動更新（Renovate Bot）
 ├── .vscode/           # エディタ設定・推奨拡張
-├── docs/              # 設計・API 仕様・ADR・実装プラン
+├── docs/              # 設計・API 仕様・ADR・実装プラン・引き継ぎ
 │   ├── adr/
 │   ├── architecture.md
 │   ├── api-specification.md
+│   ├── handover.md    # 引き継ぎ・続きの作業用（現状と次のステップ）
 │   └── implementation-plan.md
 ├── proto/             # Protocol Buffers 定義
 │   └── blog/v1/

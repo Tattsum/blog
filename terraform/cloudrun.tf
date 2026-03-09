@@ -19,11 +19,7 @@ resource "google_cloud_run_v2_service" "blog_api" {
     containers {
       image = var.cloud_run_image
 
-      env {
-        name  = "PORT"
-        value = "8080"
-      }
-
+      # PORT は Cloud Run が自動設定するため指定しない
       env {
         name = "DATABASE_DSN"
         value_source {
