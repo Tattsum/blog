@@ -20,7 +20,7 @@
 | フェーズ 2 | 完了 | Post/Tag/Auth/AI 各サービス実装済み。Bearer セッションと X-Admin-Key 併存。残りはテスト・エラー共通化（任意）。 |
 | フェーズ 3 | 完了 | 閲覧系・管理画面・タグ別一覧・AI 連携 UI まで実装済み。残りは Vertex AI 連携・SSG/ISR 最適化。 |
 | フェーズ 4 | 一部 | 認証・バリデーションは実施済み。セッション固定/CSRF・N+1/キャッシュ調整は未実施。 |
-| フェーズ 5 | 一部 | CI/CD・deploy-api.yml・infrastructure.md・setup-deploy-checklist.md まで完了。ログ・監視・アラートは未実施。 |
+| フェーズ 5 | 一部 | CI/CD・deploy-api.yml・setup-deploy-checklist.md まで完了。ログ・監視・アラートは未実施。 |
 | フェーズ 6 | 未着手 | コメント・RSS・マルチテナント・監査ログは計画のみ。 |
 
 ---
@@ -125,7 +125,7 @@
   - GitHub Actions で以下を自動化:
     - PR / push: `ci.yml` で Markdown/Proto lint、コード生成、Go テスト、golangci-lint、フロントビルド。
     - デプロイ: `deploy-api.yml` で `main` への push（backend 関連）または手動実行時に Cloud Run へ API をビルド・デプロイ。Cloudflare Pages は Git 連携で `main` に push すると自動ビルドされる想定。
-  - インフラ設定手順は `docs/infrastructure.md` に記載。
+  - インフラ設定手順は [docs/setup-deploy-checklist.md](setup-deploy-checklist.md) に記載。
 
 ---
 

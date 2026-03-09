@@ -3,7 +3,7 @@
 **対象**: 個人ブログを GCP Cloud Run（API）と Cloudflare Pages（フロント）で本番運用するまでの作業一覧。  
 **記載基準**: 2026年3月時点の公式ドキュメントおよび推奨されるやり方に基づく。
 
-関連: [インフラ設定ガイド](infrastructure.md)、[ADR-002（ホスティング方針）](adr/002-hosting-cloudflare-and-cloudrun.md)。
+関連: [ADR-002（ホスティング方針）](adr/002-hosting-cloudflare-and-cloudrun.md)。
 
 ---
 

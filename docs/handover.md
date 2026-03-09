@@ -14,7 +14,6 @@
 - **関連ドキュメント**:
   - [実装プラン・進捗](implementation-plan.md)
   - [セットアップ・デプロイ手順（詳細）](setup-deploy-checklist.md)
-  - [インフラ概要](infrastructure.md)
 
 ---
 
