@@ -12,10 +12,10 @@
 1. **GCP 準備** … プロジェクト・課金・API 有効化
 2. **GCP 認証（CI 用）** … Workload Identity Federation（鍵レス）またはサービスアカウントキー
 3. **Artifact Registry** … コンテナイメージ保存用リポジトリ
-4. **Cloud SQL** … MySQL インスタンス・DB・マイグレーション
+4. **Cloud SQL** … MySQL インスタンス・DB・マイグレーション（**Terraform 可**: 4〜6 を [terraform/README.md](../terraform/README.md) で一括実施可能）
 5. **Secret Manager** … DSN や API キーなどのシークレット
 6. **Cloud Run** … API の初回デプロイとサービス URL の確認
-7. **Cloudflare Pages** … リポジトリ連携・ビルド設定・環境変数
+7. **Cloudflare Pages** … リポジトリ連携・ビルド設定・環境変数（手動）
 8. **動作確認** … フロントから API への通信・管理画面ログイン
 
 ---
@@ -191,6 +191,8 @@ gcloud artifacts repositories create blog-repo \
 
 ## 4. Cloud SQL (MySQL) の作成とマイグレーション
 
+**Terraform で実施する場合**: 4・5・6 を一括で管理する場合は [terraform/README.md](../terraform/README.md) を参照し、`terraform/` で Cloud SQL・Secret Manager・Cloud Run を作成できます。以下は手動での手順です。
+
 ### 4.1 やること
 
 - [ ] Cloud SQL for MySQL インスタンスを作成する
@@ -240,6 +242,8 @@ gcloud artifacts repositories create blog-repo \
 
 ## 5. Secret Manager の作成
 
+**Terraform で実施する場合**: [terraform/README.md](../terraform/README.md) を参照（4 とあわせて実行）。
+
 ### 5.1 やること
 
 - [ ] Cloud Run に渡すシークレットを Secret Manager に登録する
@@ -284,6 +288,8 @@ gcloud artifacts repositories create blog-repo \
 ---
 
 ## 6. Cloud Run へのデプロイ
+
+**Terraform で実施する場合**: [terraform/README.md](../terraform/README.md) を参照（4・5 とあわせて実行）。イメージを push したうえで `terraform apply` でデプロイ可能です。
 
 ### 6.1 やること
 

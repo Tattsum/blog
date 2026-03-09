@@ -1,0 +1,20 @@
+# コピーして terraform.tfvars を作成し、実際の値に書き換えてください。
+# terraform.tfvars は .gitignore に追加することを推奨します。
+
+project_id = "your-gcp-project-id"
+region     = "asia-northeast1"
+
+# Cloud SQL（省略時はデフォルト値）
+# db_tier = "db-f1-micro"
+# db_name = "blog"
+
+# 本番では必ず設定すること。未設定時は Terraform がランダム生成（state に平文が残る）
+# db_root_password = "your-secure-root-password"
+
+# 管理 API キー（必須）
+admin_api_key = "your-secure-admin-api-key"
+
+# 初回 apply 前にイメージをビルド・push しておく
+# 例: docker build -t asia-northeast1-docker.pkg.dev/PROJECT_ID/blog-repo/blog-api:latest -f ../backend/Dockerfile ..
+#      docker push ...
+cloud_run_image = "asia-northeast1-docker.pkg.dev/your-gcp-project-id/blog-repo/blog-api:latest"

@@ -43,3 +43,10 @@ pnpm-debug.log*
 *.pem
 *.key
 secrets/
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
