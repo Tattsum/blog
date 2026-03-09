@@ -167,32 +167,10 @@ docker build -t blog-api -f backend/Dockerfile .
 
 ## 7. デプロイ手順
 
-### 7.1 バックエンド（Cloud Run）
-
-- **CI（GitHub Actions）**: `main` への push および PR で `.github/workflows/ci.yml` が実行される。Markdown lint、Proto lint、proto コード生成、Go テスト、golangci-lint、フロントエンドビルドを行う。
-- リポジトリルートまたは `backend/` に `Dockerfile` を置き、Cloud Build または GitHub Actions でビルドする想定。
-
-```bash
-# 例: Cloud Build でイメージビルド・Cloud Run へデプロイ
-gcloud builds submit --tag gcr.io/PROJECT_ID/blog-api
-gcloud run deploy blog-api --image gcr.io/PROJECT_ID/blog-api --platform managed --region REGION
-```
-
-- Cloud SQL への接続は VPC コネクタ＋プライベート IP、または Cloud SQL Auth Proxy を利用。
-- 環境変数・シークレットは Cloud Run の「変数とシークレット」または Secret Manager 連携で設定。
-
-### 7.2 フロントエンド（Cloudflare Pages）
-
-- Next.js のビルド成果物を Cloudflare Pages にデプロイする。
-
-```bash
-# 例: Wrangler または Cloudflare ダッシュボードから
-cd frontend
-npm run build
-# 出力ディレクトリ（例: .next または out）を Cloudflare Pages にアップロード
-```
-
-- 本番の API ベース URL を `NEXT_PUBLIC_API_URL` に設定し、ビルド時に埋め込む。
+- **やること一覧（詳細手順・2026年3月時点）**: [docs/setup-deploy-checklist.md](docs/setup-deploy-checklist.md) に、GCP と Cloudflare の設定からデプロイ・動作確認までのチェックリストとコマンド例を記載しています。
+- **概要**: [docs/infrastructure.md](docs/infrastructure.md) を参照。
+- **API（Cloud Run）**: `.github/workflows/deploy-api.yml` で `main` への push（backend 変更時）または手動実行により、Artifact Registry へビルド・プッシュし Cloud Run を更新。GitHub Secrets に `GCP_PROJECT_ID` と `GCP_SA_KEY` を設定するか、[Workload Identity Federation（OIDC）](docs/setup-deploy-checklist.md#8-github-actions-ワークフローoidc-利用時) で鍵なし認証が可能。
+- **フロント（Cloudflare Pages）**: Git 連携で `main` に push すると自動ビルドされる想定。`NEXT_PUBLIC_API_URL` を Cloudflare の環境変数で設定する。
 
 ---
 

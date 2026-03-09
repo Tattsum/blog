@@ -108,8 +108,9 @@
   - 5xx レート、レスポンス時間、DB 接続エラーなどに対するアラートを設定。
 - **CI/CD**
   - GitHub Actions で以下を自動化:
-    - PR 時: `npm run lint:md`, `buf lint`, `go test ./...`、（将来）`frontend` テスト。
-    - main マージ時: Cloud Run と Cloudflare Pages へのデプロイ（手動承認ステップを含めてもよい）。
+    - PR / push: `ci.yml` で Markdown/Proto lint、コード生成、Go テスト、golangci-lint、フロントビルド。
+    - デプロイ: `deploy-api.yml` で `main` への push（backend 関連）または手動実行時に Cloud Run へ API をビルド・デプロイ。Cloudflare Pages は Git 連携で `main` に push すると自動ビルドされる想定。
+  - インフラ設定手順は `docs/infrastructure.md` に記載。
 
 ---
 

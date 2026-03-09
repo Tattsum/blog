@@ -1,0 +1,57 @@
+# Cloud Run（API）へのデプロイ。
+# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY（サービスアカウントの JSON キー）
+# 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME
+name: Deploy API (Cloud Run)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "proto/**"
+      - "go.mod"
+      - "go.sum"
+      - "backend/Dockerfile"
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ secrets.GCP_REGION || 'asia-northeast1' }}-docker.pkg.dev --quiet
+
+      - name: Build and Push
+        env:
+          REGION: ${{ secrets.GCP_REGION || 'asia-northeast1' }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          IMAGE_NAME: ${{ secrets.IMAGE_NAME || 'blog-api' }}
+        run: |
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} -f backend/Dockerfile .
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA}
+
+      - name: Deploy to Cloud Run
+        env:
+          REGION: ${{ secrets.GCP_REGION || 'asia-northeast1' }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          IMAGE_NAME: ${{ secrets.IMAGE_NAME || 'blog-api' }}
+        run: |
+          gcloud run deploy blog-api \
+            --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \
+            --platform=managed \
+            --region=${REGION} \
+            --allow-unauthenticated
