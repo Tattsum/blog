@@ -512,12 +512,23 @@ jobs:
 
 #### 必要な設定
 
-1. **GitHub Secrets に `MIGRATION_DSN` を追加**
-   - 値: Cloud SQL に **TCP（3306）で接続するための DSN**。CI では Cloud SQL Auth Proxy 経由で `127.0.0.1:3306` に接続するため、次の形式にする。
-   - 例: `mysql://root:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`
-   - パスワードは Terraform の `db_root_password`（または Secret Manager の `DATABASE_DSN` に含まれる root のパスワード）と同じにする。
+1. **（初回のみ）マイグレーション用ユーザー `migrate` に権限を付与**
+   - Terraform で `migrate`@'%' ユーザーが作成される（`terraform/cloudsql.tf`）。Proxy 経由（`cloudsqlproxy~IP`）からの接続は、host が `%` のユーザーでないと「Access denied」になるため、root ではなくこのユーザーを CI で使う。
+   - **初回のみ**、Cloud SQL に接続して以下を実行する（GCP Console の「Cloud Shell で接続」や、ローカルで Cloud SQL Auth Proxy を起動したうえで `mysql` クライアントから root で接続して実行）。
 
-2. **デプロイ用サービスアカウントに Cloud SQL Client ロールを付与**
+     ```sql
+     GRANT ALL PRIVILEGES ON `blog`.* TO 'migrate'@'%';
+     FLUSH PRIVILEGES;
+     ```
+
+2. **GitHub Secrets に `MIGRATION_DSN` を追加**
+   - 値: Cloud SQL に **TCP（3306）で接続するための DSN**。CI では Cloud SQL Auth Proxy 経由で `127.0.0.1:3306` に接続するため、次の形式にする。
+   - **ユーザーは `migrate` を使う**（root は Proxy 経由で拒否される場合があるため）。
+   - 例: `mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`
+   - パスワードは Terraform の `db_root_password` と**同一**（Terraform で `migrate` ユーザーに同じパスワードを設定している）。
+   - **重要**: パスワードに `+`, `=`, `/`, `?`, `#`, `@` などの特殊文字が含まれる場合は、DSN 内で **URL エンコード**すること。例: `+` → `%2B`, `=` → `%3D`, `/` → `%2F`。エンコードしないと「Access denied (using password: YES)」になる場合がある。
+
+3. **デプロイ用サービスアカウントに Cloud SQL Client ロールを付与**
    - マイグレーション実行時に Cloud SQL Auth Proxy がインスタンスに接続するため、デプロイ用 SA（例: `blog-deploy@PROJECT_ID.iam.gserviceaccount.com`）に **Cloud SQL Client**（`roles/cloudsql.client`）を付与する。
    - 例（Terraform で作成した `blog-mysql` の場合）:
 
@@ -526,6 +537,152 @@ jobs:
        --member="serviceAccount:blog-deploy@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
        --role="roles/cloudsql.client"
      ```
+
+4. **（上記 1 の GRANT が未実施の場合）** 先に「1. マイグレーション用ユーザーに権限を付与」を実行してから、GitHub Secrets の `MIGRATION_DSN` を設定し、デプロイを実行する。
+
+#### 8.3.1 初回セットアップ詳細（Step 2・Step 3）
+
+以下は「migrate に権限付与」と「MIGRATION_DSN 設定」を、初回だけ確実に行うための詳細手順です。
+
+---
+
+##### Step 2: 初回のみ — migrate ユーザーに DB 権限を付与
+
+Terraform で作成した `migrate` ユーザーは、作成直後はどのデータベースにもアクセスできません。root で Cloud SQL に接続し、`blog` データベースに対する権限を 1 回だけ付与する必要があります。
+
+###### 2-1. Cloud SQL に接続する（いずれか一方でよい）
+
+- **方法 A: GCP Console の Cloud Shell から接続（推奨）**
+  1. [Google Cloud Console](https://console.cloud.google.com/) を開き、プロジェクト（例: `kano-blog-prod`）を選択する。
+  2. 左メニューから **SQL**（または「データベース」→「SQL」）を開く。
+  3. インスタンス **blog-mysql** をクリックする。
+  4. 画面上部の **「Cloud Shell で接続」** をクリックする（または、あらかじめ Cloud Shell を開いておき、次のコマンドを実行する）。
+  5. 接続方法で **「gcloud sql connect を使用」** を選び、表示されるコマンドを実行する（MySQL では `--database` は使えないため付けない）。例:
+
+     ```bash
+     gcloud sql connect blog-mysql --user=root --project=kano-blog-prod
+     ```
+
+  6. パスワードを聞かれたら、**Terraform の `db_root_password`**（`terraform/terraform.tfvars` に記載の値）を入力する。
+  7. 接続できたら、MySQL のプロンプト（`mysql>`）が表示される。
+
+- **方法 B: ローカル PC から Cloud SQL Auth Proxy + mysql クライアントで接続**
+  1. [Cloud SQL Auth Proxy](https://cloud.google.com/sql/docs/mysql/connect-auth-proxy) をダウンロードし、PATH の通った場所に置く（または `curl` で取得）。
+  2. ターミナルでプロキシを起動する（接続名は Terraform の `output cloud_sql_connection_name` で確認可能）:
+
+     ```bash
+     cloud-sql-proxy --port 3306 kano-blog-prod:asia-northeast1:blog-mysql
+     ```
+
+  3. **別のターミナル**で、mysql クライアントをインストール済みであれば:
+
+     ```bash
+     mysql -h 127.0.0.1 -P 3306 -u root -p blog
+     ```
+
+  4. パスワードを聞かれたら、**Terraform の `db_root_password`** を入力する。
+  5. `mysql>` プロンプトが表示されれば接続成功。
+
+###### 2-2. root で接続できない場合（Access denied for 'root'@'cloudsqlproxy~...'）
+
+**原因**: Cloud SQL Proxy 経由だと接続元が `cloudsqlproxy~<IP>` と見え、root がその host を許可していないと拒否されます。パスワードが正しくても「Access denied」になります。
+
+**対処（公開 IP で直接接続する）**: Proxy を使わず、インスタンスの**公開 IP** に mysql クライアントで接続すると、接続元が単なる IP になり、`root@'%'` で通ることがあります。
+
+1. **認証済みネットワークに Cloud Shell の IP を追加**
+   - GCP Console → **SQL** → **blog-mysql** → **接続**（Connections）タブ。
+   - **認証済みネットワーク** → **ネットワークを追加**。
+   - 名前: 例 `cloudshell`。ネットワーク: **34.81.32.136/32**（Cloud Shell の外向き IP。別の環境ならそのマシンの IP を指定）。**保存**。
+
+2. **インスタンスの公開 IP を確認**
+   - 同じ **接続** タブの「このインスタンスの接続名」付近に、**公開 IP アドレス**が表示されます。例: `34.84.xxx.xxx`。メモする。
+
+3. **Cloud Shell で mysql クライアントを入れて接続**
+   - Cloud Shell で次を実行（`<PUBLIC_IP>` は上記の公開 IP に置き換え）:
+
+     ```bash
+     sudo apt-get update && sudo apt-get install -y default-mysql-client
+     mysql -h <PUBLIC_IP> -u root -p
+     ```
+
+   - パスワードを聞かれたら、**Terraform の `db_root_password`**（`terraform.tfvars` の値）を入力する。
+
+4. **接続できたら 2-3 の SQL を実行**
+   - `mysql>` プロンプトで、前述の `GRANT` と `FLUSH PRIVILEGES` を実行する。
+
+5. **（任意）セキュリティのため認証済みネットワークを削除**
+   - 接続・GRANT が終わったら、**接続** タブで追加したネットワークを削除してよい。
+
+**それでも接続できない場合**: root のパスワードが Terraform の `db_root_password` と一致しているか確認する。GCP Console の **SQL → blog-mysql → ユーザー** で root のパスワードを**リセット**し、`terraform.tfvars` の `db_root_password` と同一にしてから再度試す。
+
+###### 2-3. SQL を実行する
+
+MySQL のプロンプト（`mysql>`）が表示されている状態で、以下を 1 行ずつ実行します。
+
+```sql
+GRANT ALL PRIVILEGES ON `blog`.* TO 'migrate'@'%';
+FLUSH PRIVILEGES;
+```
+
+- `Query OK` や `Rows affected: 0` などが出れば成功です。
+- 終了する場合は `exit` または `\q` で MySQL を抜け、Cloud Shell の場合はそのまま、ローカルの場合はプロキシを Ctrl+C で止めてください。
+
+これで、CI から `migrate` ユーザーで接続したときに `blog` データベースに対してマイグレーション（CREATE TABLE 等）を実行できるようになります。
+
+---
+
+##### Step 3: GitHub Secrets に MIGRATION_DSN を設定する
+
+CI（deploy-api ワークフロー）が本番 DB に接続するために、GitHub のリポジトリに Secret を 1 件登録します。
+
+###### 3-1. DSN の形
+
+- 形式: `mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`
+- **ユーザー名**: 必ず **`migrate`**（root ではない）。
+- **パスワード**: Terraform の `db_root_password` と**完全に同じ**文字列。Terraform で `migrate` ユーザーにも同じパスワードを設定しているため、この 1 つでよい。
+
+###### 3-2. パスワードに特殊文字が含まれる場合の URL エンコード
+
+DSN は URL 形式のため、パスワードに次の文字が含まれる場合は **エンコード** が必要です。エンコードしないと「Access denied (using password: YES)」になることがあります。
+
+| 文字 | エンコード後 |
+|------|--------------|
+| `+`  | `%2B`        |
+| `=`  | `%3D`        |
+| `/`  | `%2F`        |
+| `?`  | `%3F`        |
+| `#`  | `%23`        |
+| `@`  | `%40`        |
+| `%`  | `%25`        |
+
+- 例: パスワードが `e6O2jI1+zDg4pv85lQNt2hKIPMyaGaqg` の場合、`+` を `%2B` に置き換え、`e6O2jI1%2BDg4pv85lQNt2hKIPMyaGaqg` として DSN に書く。
+
+###### 3-3. 登録手順
+
+1. GitHub でリポジトリ（例: `Tattsum/blog`）を開く。
+2. **Settings** → **Secrets and variables** → **Actions** を開く。
+3. **New repository secret** をクリックする。
+4. **Name** に **`MIGRATION_DSN`** と入力する。
+5. **Secret** に、次のような 1 行を貼り付ける（パスワードは実際の値に置き換え、必要なら URL エンコードする）:
+   - 例（パスワードが `e6O2jI1+zDg4pv85lQNt2hKIPMyaGaqg` で URL エンコードした場合）:
+
+     ```text
+     mysql://migrate:e6O2jI1%2BDg4pv85lQNt2hKIPMyaGaqg@tcp(127.0.0.1:3306)/blog?parseTime=true
+     ```
+
+6. **Add secret** で保存する。
+
+###### 3-4. 確認
+
+- 既に `MIGRATION_DSN` がある場合は **Update** で上書きできます。root で設定していた場合は、**migrate** ユーザー＋正しいパスワード（と必要なら URL エンコード）に変更してください。
+- 設定後、`main` に push するか、Actions から「Deploy API (Cloud Run)」ワークフローを手動実行すると、「Run migrations」ステップで上記 DSN が使われます。
+
+---
+
+##### このあと（Step 4 以降）
+
+- デプロイ用サービスアカウントに **Cloud SQL Client** ロールが付与されていること（本セクション「3. デプロイ用サービスアカウントに Cloud SQL Client ロールを付与」）を確認する。
+- 以上で、CI 上のマイグレーションとデプロイが通る状態になります。
 
 #### 挙動
 

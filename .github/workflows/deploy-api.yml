@@ -1,5 +1,5 @@
 # Cloud Run（API）へのデプロイ。
-# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY, MIGRATION_DSN（本番 DB 用。例: mysql://root:PASSWORD@tcp(127.0.0.1:3306)/blog?parseTime=true）
+# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY, MIGRATION_DSN（本番 DB 用。migrate ユーザー推奨。例: mysql://migrate:PASSWORD@tcp(127.0.0.1:3306)/blog?parseTime=true）
 # 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME
 # デプロイ用サービスアカウントに Cloud SQL Client ロールが必要（マイグレーション実行のため）。
 name: Deploy API (Cloud Run)
