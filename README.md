@@ -93,6 +93,16 @@ docker run -d --name blog-mysql -e MYSQL_ROOT_PASSWORD=local -e MYSQL_DATABASE=b
 migrate -path backend/db/migrations -database "mysql://root:local@tcp(localhost:3306)/blog" up
 ```
 
+- 管理画面のログイン用に、初回だけ管理者ユーザを 1 件登録する（任意）:
+
+```bash
+SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD=yourpassword \
+  DATABASE_DSN="mysql://root:local@tcp(localhost:3306)/blog" \
+  go run ./backend/cmd/seed
+```
+
+  同じメールが既に存在する場合は何もしません。表示名は `SEED_ADMIN_DISPLAY_NAME` で指定できます。
+
 ### 4.5 フロントエンドの起動
 
 ```bash
@@ -117,6 +127,9 @@ npm run dev
 | `VERTEX_AI_LOCATION` | Vertex AI リージョン | `us-central1` | 任意 |
 | `SESSION_SECRET` | セッション署名用シークレット | — | 管理者認証時 |
 | `PORT` | サーバー待ち受けポート | `8080` | 任意 |
+| `SEED_ADMIN_EMAIL` | シード用・管理者メール（`cmd/seed` 実行時） | — | シード時 |
+| `SEED_ADMIN_PASSWORD` | シード用・管理者パスワード（8 文字以上） | — | シード時 |
+| `SEED_ADMIN_DISPLAY_NAME` | シード用・表示名 | 空 | 任意 |
 | **フロントエンド** | | | |
 | `NEXT_PUBLIC_API_URL` | Connect API のベース URL | `http://localhost:8080` | 必須 |
 

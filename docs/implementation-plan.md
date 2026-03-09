@@ -37,6 +37,7 @@
   - `backend/internal/domain/repository` に `PostRepository`, `TagRepository`, `UserRepository`, `Clock` を定義済み。
 - **MySQL 実装**
   - `backend/internal/infrastructure/mysql` に各リポジトリ実装を追加済み。`backend/db/migrations` に golang-migrate 用の初期スキーマ（users, tags, posts, post_tags）を配置。
+  - 初回管理者ユーザ登録用に `backend/cmd/seed` を用意。`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` / `DATABASE_DSN` を指定して実行すると、該当メールが未登録の場合に bcrypt ハッシュで 1 件 INSERT する。
 - **テスト**
   - ドメイン層（post）のユニットテストを追加済み。リポジトリ層の統合テストは未実装（任意）。
 - **フェーズ 1 完了条件**: ドメイン・リポジトリIF・MySQL 実装が存在し、`go test ./backend/...` および `golangci-lint run ./...` が通ること。
