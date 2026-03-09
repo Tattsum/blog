@@ -7,6 +7,7 @@ import { PostService } from "@/gen/blog/v1/post_pb";
 import { TagService } from "@/gen/blog/v1/tag_pb";
 import { AIService } from "@/gen/blog/v1/ai_pb";
 import { AuthService } from "@/gen/blog/v1/auth_pb";
+import { edgeSafeFetch } from "@/lib/edge-safe-fetch";
 
 const baseUrl =
   typeof window !== "undefined"
@@ -14,7 +15,7 @@ const baseUrl =
     : process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 const baseTransport = () =>
-  createConnectTransport({ baseUrl });
+  createConnectTransport({ baseUrl, fetch: edgeSafeFetch });
 
 /** ログイン用。認証ヘッダーなしで AuthService.Login を呼ぶ */
 export function getLoginClient() {
@@ -30,6 +31,7 @@ function createBearerTransport(sessionToken: string) {
   return createConnectTransport({
     baseUrl,
     interceptors: [interceptor],
+    fetch: edgeSafeFetch,
   });
 }
 
@@ -42,6 +44,7 @@ function createAdminKeyTransport(adminKey: string) {
   return createConnectTransport({
     baseUrl,
     interceptors: [interceptor],
+    fetch: edgeSafeFetch,
   });
 }
 

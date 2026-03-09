@@ -2,6 +2,7 @@ import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { PostService } from "@/gen/blog/v1/post_pb";
 import { TagService } from "@/gen/blog/v1/tag_pb";
+import { edgeSafeFetch } from "@/lib/edge-safe-fetch";
 
 const baseUrl =
   typeof window !== "undefined"
@@ -10,6 +11,7 @@ const baseUrl =
 
 const transport = createConnectTransport({
   baseUrl,
+  fetch: edgeSafeFetch,
 });
 
 export const postClient = createClient(PostService, transport);

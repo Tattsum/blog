@@ -37,7 +37,9 @@
 
 Cloudflare Workers（Edge）では、`fetch` の `redirect` オプションに `"error"` を指定すると **「Invalid redirect value, must be one of 'follow' or 'manual'」** が発生する。
 
-- **対応**: `frontend/src/instrumentation.ts` で Edge ランタイム時のみ `instrumentation-edge.ts` を読み込み、グローバルな `fetch` をラップする。`redirect: "error"` が渡された場合は `redirect: "follow"` に置き換えてから実行する。
+- **対応（二重対策）**:
+  1. **Connect トランスポート**: `frontend/src/lib/edge-safe-fetch.ts` で `redirect: "error"` を `"follow"` に正規化する `edgeSafeFetch` を定義し、`api.ts` と `admin-api.ts` の `createConnectTransport` に `fetch: edgeSafeFetch` を渡す。API 呼び出しはこちらで確実にカバーされる。
+  2. **グローバル fetch**: `frontend/src/instrumentation.ts` で Edge ランタイム時のみ `instrumentation-edge.ts` を読み込み、グローバルな `fetch` をラップする。Next や他ライブラリが `redirect: "error"` を使う場合の保険。
 - **参照**: [Cloudflare Workers Request](https://developers.cloudflare.com/workers/runtime-apis/request/)、[OpenNext troubleshooting](https://opennext.js.org/cloudflare/troubleshooting)。
 
 ---
@@ -49,6 +51,7 @@ Cloudflare Workers（Edge）では、`fetch` の `redirect` オプションに `
 | `frontend/src/app/globals.css` | テーマ変数・コンテナ・記事一覧・post-body のスタイル |
 | `frontend/src/app/layout.tsx` | フォント変数・`suppressHydrationWarning`（テーマのちらつき軽減） |
 | `frontend/src/instrumentation.ts` | Edge 時のみ fetch の redirect を正規化するモジュールを読み込み |
-| `frontend/src/instrumentation-edge.ts` | fetch の `redirect: "error"` を `"follow"` に置き換えるラッパー |
+| `frontend/src/instrumentation-edge.ts` | fetch の `redirect: "error"` を `"follow"` に置き換えるラッパー（グローバル） |
+| `frontend/src/lib/edge-safe-fetch.ts` | Connect 用に `redirect` を正規化する fetch（トランスポートに渡す） |
 
 以上を踏まえ、新規ページやコンポーネントを追加する際は、色指定に CSS 変数を使い、必要に応じて `.container` や `.article-list` を利用すること。
