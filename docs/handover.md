@@ -21,13 +21,21 @@
 ## 2. 直近の作業内容（ここまでの流れ）
 
 - **Terraform で GCP を管理**: Cloud SQL (MySQL)、Secret Manager（DATABASE_DSN, ADMIN_API_KEY）、Cloud Run を `terraform/` で定義。Artifact Registry と WIF は手順書どおり手動で済ませ済み。
-- **terraform apply の実施**: Cloud SQL インスタンス `blog-mysql` と DB `blog`、Secret Manager のシークレット・バージョンは作成完了。**Cloud Run サービスは一度失敗**（後述の理由で修正済み）。
+- **terraform apply の実施**: Cloud SQL インスタンス `blog-mysql` と DB `blog`、Secret Manager、**Cloud Run サービス**まで作成完了。Cloud Run は一度 PORT/amd64 で失敗したが、起動順序修正と Dockerfile の proto 生成追加で解消済み。
 - **Cloud Run まわりの修正**:
   - **PORT**: Cloud Run v2 では `PORT` は予約のため指定不可。`terraform/cloudrun.tf` から `PORT` の env を削除済み。
-  - **イメージアーキテクチャ**: Cloud Run は **linux/amd64** のみ対応。M1/M2 等でビルドすると arm64 になりエラーになるため、**必ず `--platform linux/amd64` でビルド**する必要あり。ルートの `Makefile` で `make docker-api` がそのようにビルドするよう記載済み。
-- **CI でマイグレーション実行**: `.github/workflows/deploy-api.yml` に「Run migrations」ステップを追加。Cloud SQL Auth Proxy + golang-migrate で本番 DB に `migrate up` を実行。GitHub Secrets の `MIGRATION_DSN` と、デプロイ用 SA への **Cloud SQL Client** ロールが必要。
-- **Makefile の追加**: ルートに `Makefile` を追加。`make docker-api`（ビルド＋push）、`make terraform-*`、`make migrate-up`、`make proto` / `make lint` / `make test` などを用意。デフォルトの `GCP_PROJECT_ID` は `kano-blog-prod`、`REGION` は `asia-northeast1`。
-- **計画書の更新**: Google アカウントでの管理者ログインをフェーズ 4・6 に追記済み。
+  - **起動順序**: `backend/cmd/server/main.go` で DB 接続より先に `ListenAndServe` を開始するよう変更（Cloud Run の起動タイムアウト対策）。
+  - **イメージアーキテクチャ**: Cloud Run は **linux/amd64** のみ。`make docker-api` が `--platform linux/amd64` でビルドするよう記載済み。
+- **マイグレーション・CI**:
+  - Terraform で **migrate** ユーザー（host `%`）を追加。root は Proxy 経由で Access denied になるため、CI では `migrate` を使用。
+  - GitHub Secrets は **`MIGRATION_PASSWORD`**（推奨・tfvars の `db_root_password` をそのまま。ワークフロー側で URL エンコード）または `MIGRATION_DSN`。初回のみ DB に `GRANT ... ON blog.* TO 'migrate'@'%'` を実行する必要あり（[setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行)）。
+  - マイグレーション `000001`: `summary` を MySQL 8 対応のため `TEXT` → `VARCHAR(2000)` に変更済み。dirty 状態の解消は `DROP TABLE schema_migrations` 等でリセットしてから再実行。
+- **Docker ビルド**: `gen/` は .gitignore のため CI に無い。`backend/Dockerfile` で buf + protoc-gen-go/connect-go により **ビルド時に proto から Go コードを生成**。`buf.gen.go.yaml`（Go 専用）をリポジトリに追加済み。
+- **フロント（Cloudflare Pages）**:
+  - `.gitignore` を `gen/` → `/gen/` に変更し、**frontend/src/gen/**（proto から生成した TypeScript）をリポジトリにコミット済み。Cloudflare の clone に含まれるためビルドが通る。
+  - Cloudflare のビルド設定: ルート `frontend`、**デプロイコマンド** `npx wrangler deploy`（ビルドコマンドは空でも可。wrangler が OpenNext で build まで実行）。
+  - **`frontend/package.json` の `name` を `blog` に変更済み**。OpenNext が `WORKER_SELF_REFERENCE` のサービス名に package name を使うため、`frontend` のままだと「Worker 'frontend' が存在しない」でデプロイ失敗する問題を解消。
+- **Makefile**: ルートに `Makefile` を追加。`make docker-api`、`make terraform-*`、`make migrate-up`、`make proto` / `make lint` / `make test` など。デフォルトの `GCP_PROJECT_ID` は `kano-blog-prod`、`REGION` は `asia-northeast1`。
 
 ---
 
@@ -38,11 +46,11 @@
 | GCP プロジェクト | 利用中 | `kano-blog-prod` |
 | Workload Identity / デプロイ用 SA | 済 | `blog-deploy`、Artifact Registry・Cloud Run デプロイ用 |
 | Artifact Registry | 済 | `blog-repo`（asia-northeast1） |
-| Cloud SQL (MySQL) | Terraform で作成済み | インスタンス `blog-mysql`、DB `blog` |
+| Cloud SQL (MySQL) | Terraform で作成済み | インスタンス `blog-mysql`、DB `blog`。migrate ユーザー（host %）も Terraform で作成。 |
 | Secret Manager | Terraform で作成済み | `DATABASE_DSN`、`ADMIN_API_KEY` |
-| Cloud Run サービス | **未作成** | 上記の PORT/amd64 対応後に apply で作成予定 |
-| デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（マイグレーション＋ビルド＋デプロイ） |
-| Cloudflare Pages | 手動想定 | 手順は [setup-deploy-checklist.md セクション 7](setup-deploy-checklist.md#7-cloudflare-pages-の設定手動) |
+| Cloud Run サービス | **作成済み** | デプロイ用ワークフローでマイグレーション・ビルド・デプロイまで成功済み。URL は `terraform output cloud_run_url` で取得。 |
+| デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（MIGRATION_PASSWORD で DSN 組み立て → マイグレーション → ビルド・push → Cloud Run デプロイ） |
+| Cloudflare Pages | 設定済み／要確認 | ルート `frontend`、デプロイコマンド `npx wrangler deploy`。package.json name を `blog` に変更済みで WORKER_SELF_REFERENCE エラーを解消。**次のエージェント**: ビルド再実行でデプロイ成功するか確認し、環境変数 `NEXT_PUBLIC_API_URL`（Cloud Run URL）が設定されているか確認すること。 |
 
 ---
 
@@ -59,31 +67,24 @@
 
 ## 5. 次にやること（続きの作業チェックリスト）
 
-1. **Cloud Run 用イメージを linux/amd64 で push する**
-   - リポジトリルートで `make docker-api`（要 `GCP_PROJECT_ID` / `REGION` の環境変数または Makefile デフォルト）。
-   - これを行わないと Terraform の Cloud Run 作成が「イメージが amd64 でない」と失敗する。
+**次のエージェント向け**: 以下は現時点で未完了または要確認の項目です。
 
-2. **Terraform で Cloud Run を作成する**
-   - `cd terraform && terraform apply`
-   - 作成されるのは `google_cloud_run_v2_service.blog_api` と `google_cloud_run_v2_service_iam_member.public`。
+1. **Cloudflare Pages のデプロイ確認**
+   - `frontend/package.json` の `name` を `blog` に変更済み。Cloudflare で「ビルドを再試行」し、`npx wrangler deploy` が最後まで成功するか確認する。
+   - 失敗する場合は [setup-deploy-checklist.md セクション 7](setup-deploy-checklist.md#7-cloudflare-pages-の設定手動) および本ドキュメント「7. 注意事項」を参照。
 
-3. **（初回のみ）migrate ユーザーに DB 権限を付与**
-   - [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「マイグレーション用ユーザーに権限を付与」を実行。その後、GitHub Secrets に **`MIGRATION_PASSWORD`**（推奨・tfvars の `db_root_password` をそのまま）または `MIGRATION_DSN` を設定。
+2. **Cloudflare の環境変数**
+   - 本番で API を叩くため、Cloudflare Pages の環境変数に **`NEXT_PUBLIC_API_URL`** を設定する（値は `terraform output cloud_run_url` で取得した Cloud Run の URL）。未設定なら「設定」→「環境変数」で追加。
 
-4. **本番 DB にマイグレーションをかける（CI または手動）**
-   - CI では `MIGRATION_DSN` 設定で自動実行。手動の場合は Cloud SQL Auth Proxy で `localhost:3306` に接続した状態で、`DATABASE_DSN`（または `MIGRATION_DSN` 相当）を設定して `make migrate-up`。パスワードは `terraform.tfvars` の `db_root_password` と同じ（migrate ユーザーも同じパスワード）。
+3. **（任意）管理ユーザーの seed**
+   - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
 
-5. **Cloud Run の URL を控える**
-   - `terraform output cloud_run_url` を実行し、フロントの本番環境変数 `NEXT_PUBLIC_API_URL` に設定する（Cloudflare Pages の環境変数など）。
+4. **動作確認**
+   - Cloud Run の URL に `/healthz` を GET して 200 であること。
+   - Cloudflare Pages の URL でフロントが表示され、API（記事一覧等）が動作すること。
+   - 管理画面（`/admin`）でログインまたは API キー入力ができること。
 
-6. **Cloudflare Pages の設定（未実施なら）**
-   - [setup-deploy-checklist.md セクション 7](setup-deploy-checklist.md#7-cloudflare-pages-の設定手動) の手順で、リポジトリ連携・ルート `frontend`・ビルドコマンド・`NEXT_PUBLIC_API_URL` を設定。
-
-7. **（任意）管理ユーザーの seed**
-   - ローカルで `go run ./backend/cmd/seed` を実行し、管理画面用のメール/パスワードを 1 件登録。
-
-8. **動作確認**
-   - Cloud Run の `/healthz`、フロントの表示、管理画面ログイン（メール/パスワードまたは API キー）を確認。
+**参考（すでに実施済み）**: Cloud Run 用イメージ push、Terraform apply、migrate 権限付与、MIGRATION_PASSWORD 設定、CI マイグレーション成功、Docker ビルド時の proto 生成、frontend/src/gen のコミット、package.json name の修正。
 
 ---
 
@@ -109,6 +110,7 @@
 - **Cloud Run の PORT**: Terraform で `PORT` を env に指定してはいけない。Cloud Run が自動設定する。
 - **Terraform apply の順序**: イメージを先に push してから `terraform apply` する。未 push や arm64 イメージのまま apply するとエラーになる。
 - **GitHub Secrets**: マイグレーション用は **`MIGRATION_PASSWORD`**（推奨・`db_root_password` をそのまま、URL エンコード不要）または **`MIGRATION_DSN`** を Secrets に登録。初回のみ [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「migrate に権限付与」を実行すること。
+- **Cloudflare Pages / OpenNext**: `frontend/package.json` の **`name` は `blog` にすること**。`frontend` のままだと wrangler が生成する `WORKER_SELF_REFERENCE` が存在しない Worker 名を参照し、デプロイが失敗する。
 - **記事の公開範囲**: 記事はログイン不要で URL を知っていれば閲覧可能（公開記事のみ）。投稿・編集・削除は管理者のみ（計画書に Google ログインの拡張を追記済み）。
 
 ---
@@ -133,4 +135,11 @@ make lint
 make test
 ```
 
-以上を把握しておけば、続きの作業（apply → マイグレーション → Cloudflare → 動作確認）をスムーズに進められます。
+以上を把握しておけば、続きの作業（Cloudflare デプロイ確認 → 環境変数 → 動作確認）をスムーズに進められます。
+
+---
+
+## 9. レビュー・指摘メモ
+
+- 直近の PR やコードレビューで指摘された内容があれば、ここに要約を追記すること。
+- 現時点では特記事項なし。次のエージェントは **Cloudflare のビルド再試行** と **NEXT_PUBLIC_API_URL** の設定確認を優先してほしい。
