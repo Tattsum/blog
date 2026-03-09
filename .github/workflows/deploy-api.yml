@@ -1,5 +1,6 @@
 # Cloud Run（API）へのデプロイ。
-# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY, MIGRATION_DSN（本番 DB 用。migrate ユーザー推奨。例: mysql://migrate:PASSWORD@tcp(127.0.0.1:3306)/blog?parseTime=true）
+# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY
+# マイグレーション用: MIGRATION_PASSWORD（推奨・migrate のパスワード＝tfvars の db_root_password。URL エンコード不要）または MIGRATION_DSN（全文を指定する場合）
 # 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME
 # デプロイ用サービスアカウントに Cloud SQL Client ロールが必要（マイグレーション実行のため）。
 name: Deploy API (Cloud Run)
@@ -38,11 +39,16 @@ jobs:
 
       - name: Run migrations (Cloud SQL Proxy + golang-migrate)
         env:
+          MIGRATION_PASSWORD: ${{ secrets.MIGRATION_PASSWORD }}
           MIGRATION_DSN: ${{ secrets.MIGRATION_DSN }}
         run: |
           set -e
+          # MIGRATION_PASSWORD があれば DSN を組み立て（パスワードを URL エンコード）。なければ MIGRATION_DSN をそのまま使用
+          if [ -n "$MIGRATION_PASSWORD" ]; then
+            MIGRATION_DSN="mysql://migrate:$(python3 -c "import urllib.parse, os; p=os.environ.get('MIGRATION_PASSWORD',''); print(urllib.parse.quote(p, safe=''))")@tcp(127.0.0.1:3306)/blog?parseTime=true"
+          fi
           if [ -z "$MIGRATION_DSN" ]; then
-            echo "MIGRATION_DSN not set, skipping migrations"
+            echo "MIGRATION_PASSWORD or MIGRATION_DSN not set, skipping migrations"
             exit 0
           fi
           # Cloud SQL Auth Proxy をダウンロード

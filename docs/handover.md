@@ -51,7 +51,7 @@
 - **Terraform 変数**: `terraform/terraform.tfvars`（`.gitignore` 済み）。`project_id`、`db_root_password`、`admin_api_key`、`cloud_run_image` など。サンプルは `terraform/terraform.tfvars.example`。
 - **ローカル環境変数**: `.envrc`（`.gitignore` 済み）。サンプルは `.envrc.example`。GCP_PROJECT_ID、REGION、GITHUB_ORG など。
 - **GitHub Actions**:
-  - **Secrets**: `GCP_PROJECT_ID`、`GCP_SA_KEY`、`MIGRATION_DSN` が必須。任意で `GCP_REGION`、`IMAGE_NAME`。
+  - **Secrets**: `GCP_PROJECT_ID`、`GCP_SA_KEY` が必須。マイグレーション用に `MIGRATION_PASSWORD`（推奨）または `MIGRATION_DSN`。任意で `GCP_REGION`、`IMAGE_NAME`。
   - **Variables**: ワークフローは現状 `secrets.*` を参照しているため、上記は Secrets に登録する必要あり。
 - **GCP IAM**: デプロイ用 SA `blog-deploy` に **Cloud SQL Client**（`roles/cloudsql.client`）を付与すること（CI マイグレーション用）。手順は [setup-deploy-checklist.md 8.3](setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行)。
 
@@ -68,7 +68,7 @@
    - 作成されるのは `google_cloud_run_v2_service.blog_api` と `google_cloud_run_v2_service_iam_member.public`。
 
 3. **（初回のみ）migrate ユーザーに DB 権限を付与**
-   - [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「マイグレーション用ユーザーに権限を付与」を実行。その後、GitHub Secrets の `MIGRATION_DSN` を `mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`（パスワードは URL エンコード）に設定。
+   - [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「マイグレーション用ユーザーに権限を付与」を実行。その後、GitHub Secrets に **`MIGRATION_PASSWORD`**（推奨・tfvars の `db_root_password` をそのまま）または `MIGRATION_DSN` を設定。
 
 4. **本番 DB にマイグレーションをかける（CI または手動）**
    - CI では `MIGRATION_DSN` 設定で自動実行。手動の場合は Cloud SQL Auth Proxy で `localhost:3306` に接続した状態で、`DATABASE_DSN`（または `MIGRATION_DSN` 相当）を設定して `make migrate-up`。パスワードは `terraform.tfvars` の `db_root_password` と同じ（migrate ユーザーも同じパスワード）。
@@ -108,7 +108,7 @@
 - **Cloud Run のイメージ**: 必ず **linux/amd64** でビルドする。ローカルが arm64 の場合は `make docker-api`（内部で `--platform linux/amd64` を付与）を使う。
 - **Cloud Run の PORT**: Terraform で `PORT` を env に指定してはいけない。Cloud Run が自動設定する。
 - **Terraform apply の順序**: イメージを先に push してから `terraform apply` する。未 push や arm64 イメージのまま apply するとエラーになる。
-- **GitHub Secrets**: `MIGRATION_DSN` は **Secrets** に登録する（Variables だとワークフローから参照されない＋機密のため）。値は **`migrate` ユーザー**で `mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true` 形式。パスワードは `db_root_password` と同じ。特殊文字は URL エンコード（例: `+` → `%2B`）。初回のみ [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「migrate に権限付与」を実行すること。
+- **GitHub Secrets**: マイグレーション用は **`MIGRATION_PASSWORD`**（推奨・`db_root_password` をそのまま、URL エンコード不要）または **`MIGRATION_DSN`** を Secrets に登録。初回のみ [setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) の「migrate に権限付与」を実行すること。
 - **記事の公開範囲**: 記事はログイン不要で URL を知っていれば閲覧可能（公開記事のみ）。投稿・編集・削除は管理者のみ（計画書に Google ログインの拡張を追記済み）。
 
 ---
