@@ -1,12 +1,10 @@
-# golangci-lint 設定（https://golangci-lint.run）
+# golangci-lint 設定（https://golangci-lint.run）v2
 # 実行: golangci-lint run ./...
 version: "2"
 
 run:
   timeout: 5m
   modules-download-mode: readonly
-  skip-dirs:
-    - vendor
 
 linters:
   enable:
@@ -17,6 +15,8 @@ linters:
     - unused
 
 issues:
+  exclude-dirs:
+    - vendor
   max-issues-per-linter: 50
   max-same-issues: 3
   exclude-rules:

@@ -35,7 +35,7 @@
 | pnpm | 10+ | フロントエンドのパッケージ管理 |
 | Docker | 29+ | ローカル DB・Cloud Run ビルド |
 | buf | 1.66+ | Proto の lint・コード生成 |
-| golangci-lint | 最新 | Go の lint（`go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`） |
+| golangci-lint | v2 最新 | Go の lint（`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`） |
 | MySQL | 8.4 (LTS) | ローカル開発用（Docker 可） |
 
 ---
@@ -60,7 +60,7 @@ go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
 go install github.com/bufbuild/buf/cmd/buf@latest
 
 # Go の lint
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 ```
 
 ### 4.3 Proto のコード生成
