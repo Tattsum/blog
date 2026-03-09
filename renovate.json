@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Asia/Tokyo",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "npm: ルートの devDependencies をグループ化",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["*"],
+      "matchPaths": ["package.json"],
+      "groupName": "root npm dependencies",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "npm: フロントエンドの dependencies をグループ化",
+      "matchManagers": ["npm"],
+      "matchPackagePatterns": ["*"],
+      "matchPaths": ["frontend/package.json"],
+      "groupName": "frontend npm dependencies",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Go: マイナー・パッチをまとめて更新",
+      "matchManagers": ["gomod"],
+      "groupName": "go modules",
+      "separateMinorPatch": true
+    },
+    {
+      "description": "GitHub Actions: アクションの更新をグループ化",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Dockerfile: ベースイメージの更新をグループ化",
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker base images"
+    },
+    {
+      "description": "メジャーアップデートは別 PR でラベル",
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "major"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  }
+}
