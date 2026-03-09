@@ -340,7 +340,9 @@ gcloud artifacts repositories create blog-repo \
 
 ---
 
-## 7. Cloudflare Pages の設定
+## 7. Cloudflare Pages の設定（手動）
+
+Cloudflare Pages は Terraform での管理が難しいため、ここではダッシュボードでの手動設定手順を詳細に記載します。
 
 ### 7.1 やること
 
@@ -349,43 +351,118 @@ gcloud artifacts repositories create blog-repo \
 - [ ] 環境変数 `NEXT_PUBLIC_API_URL` を設定する
 - [ ] （任意）カスタムドメインを設定する
 
-### 7.2 詳細手順（2026年3月時点・モノレポ）
+### 7.2 前提（事前に用意するもの）
 
-1. **プロジェクト作成**
-   - [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-   - GitHub を認証し、リポジトリ `Tattsum/blog`（または自分の fork）を選択
-   - ブランチ: `main`
+- Cloudflare アカウント（[dash.cloudflare.com](https://dash.cloudflare.com/) でサインアップ可）
+- GitHub に本リポジトリ（または fork）が push 済みであること
+- **6. Cloud Run** まで完了し、Cloud Run のサービス URL を控えていること（例: `https://blog-api-xxxxx-an.a.run.app`）。この URL を後で環境変数に設定します。
 
-2. **ビルド設定（モノレポ）**
-   - **Build configuration** で以下を設定:
-     - **Framework preset**: Next.js（または None で手動）
-     - **Root directory**: `frontend`  
-       → ルートを `frontend` にすると、ビルドは `frontend` 直下で実行されます
-     - **Build command**: `npm run build`  
-       - ルートを `frontend` にした場合は `npm ci` は Cloudflare が自動で実行するため、`npm run build` のみで可
-     - **Build output directory**:  
-       - Next.js をそのまま使う場合（SSR あり）: Cloudflare の Next.js 統合の場合は `.next` など自動検出に任せる
-       - 静的エクスポート（`output: 'export'`）の場合: `out`
-   - **Environment variables**（次の項目で設定）
+### 7.3 手順 1: Pages プロジェクトの作成と Git 接続
 
-3. **Node バージョン（2026年3月時点）**
-   - Cloudflare Pages のビルドでは Node.js のバージョンが重要です。`frontend` に `.nvmrc` を置き、中身を `20` または `22` にすると、多くの環境でそのバージョンが使われます。
-   - `package.json` の `engines` も推奨:
+1. [Cloudflare Dashboard](https://dash.cloudflare.com/) にログインする。
+2. 左サイドバーで **Workers & Pages** をクリックする。
+3. **Create** ボタンをクリックし、**Pages** を選択する。
+4. **Connect to Git** を選択する。
+5. **GitHub** が表示されたら **Connect GitHub** をクリックし、表示される手順に従って GitHub と連携する（初回のみ。Organization の場合は「All repositories」または対象リポジトリへのアクセスを許可する）。
+6. リポジトリ一覧から **Tattsum/blog**（または自分の fork の名前）を選択する。
+7. **Begin setup** をクリックする。
+8. 次の「7.4 ビルド設定」の画面に進む。
 
-     ```json
-     "engines": { "node": ">=20.0.0" }
-     ```
+### 7.4 手順 2: ビルド設定（モノレポ・Next.js）
 
-4. **環境変数**
-   - **Settings** → **Environment variables** → **Production**（および必要なら Preview）で追加:
-     - `NEXT_PUBLIC_API_URL`: 上記で控えた Cloud Run のサービス URL（例: `https://blog-api-xxxxx-an.a.run.app`）
-   - 変更後は再デプロイ（**Deployments** から「Retry deployment」または push で再ビルド）が必要です。
+このリポジトリはモノレポのため、**ルートディレクトリを `frontend` に変更**する必要があります。
 
-5. **初回デプロイ**
-   - 設定を保存すると自動でビルドが開始されます。失敗した場合は「Deployments」のログでエラーを確認し、ルートディレクトリ・ビルドコマンド・Node バージョンを調整してください。
+1. **Project name**  
+   - 任意（例: `blog` や `myblog`）。サブドメインは `プロジェクト名.pages.dev` になる。
 
-6. **カスタムドメイン（任意）**
-   - **Custom domains** でドメインを追加し、案内に従って DNS（CNAME など）を設定します。
+2. **Production branch**  
+   - `main` のままにする（本番デプロイ対象のブランチ）。
+
+3. **Build configuration** で **Framework preset**  
+   - **Next.js** を選択する。  
+   - 一覧にない場合は **None** を選び、以降の項目を手動で入力する。
+
+4. **Root directory（重要）**  
+   - **Set root directory** にチェックを入れる。  
+   - 値に **`frontend`** と入力する。  
+   - これにより、ビルドはリポジトリルートではなく `frontend` ディレクトリ直下で実行される。
+
+5. **Build command**  
+   - **Next.js** を選んだ場合: 多くの場合 **`npm run build`** が自動で入る。空なら `npm run build` を入力する。  
+   - **None** で手動の場合は **`npm ci && npm run build`** または **`npm run build`**（Cloudflare が事前に `npm install` 相当を行う場合は `npm run build` のみで可）。
+
+6. **Build output directory**  
+   - **Next.js** プリセットの場合は、Cloudflare の Next.js 統合により自動設定されることが多い。表示されている場合はそのまま。  
+   - 手動の場合は、Next.js 13+ App Router では **`.next`** が使われる。静的エクスポート（`output: 'export'`）にしている場合は **`out`** を指定する。  
+   - 本プロジェクトはデフォルトの Next.js 設定のため、自動設定または **`.next`** を採用する。
+
+7. **Environment variables**  
+   - この段階では追加しなくてよい。**Save** 後、**7.6 手順 4** で環境変数を追加する。
+
+8. **Save and Deploy** をクリックする。  
+   - 初回ビルドが開始される。ルートを `frontend` にしているため、`frontend` 内の `package.json` と `next.config.ts` が使われる。
+
+### 7.5 手順 3: Node バージョンの指定（推奨）
+
+Cloudflare Pages のビルドで使う Node バージョンを固定すると、ビルドが安定しやすいです。
+
+1. リポジトリの **`frontend`** ディレクトリ直下に **`.nvmrc`** を作成する（未作成の場合）。  
+   - 中身は 1 行で **`20`** または **`22`**（例: `20`）。  
+   - 多くの Cloudflare ビルド環境では `.nvmrc` が読まれ、そのバージョンが使われる。
+
+2. **`frontend/package.json`** に **`engines`** を追加する（任意だが推奨）:
+
+   ```json
+   "engines": {
+     "node": ">=20.0.0"
+   }
+   ```
+
+3. 上記をコミット・push すると、次回のデプロイからその Node バージョンが使われる。
+
+### 7.6 手順 4: 環境変数の設定
+
+Cloud Run の API をフロントから呼ぶために、本番用の環境変数を設定します。
+
+1. Cloudflare Dashboard の **Workers & Pages** から、作成した **Pages プロジェクト**（例: blog）をクリックする。
+2. 上部タブで **Settings** をクリックする。
+3. 左メニューで **Environment variables** をクリックする。
+4. **Add variable** または **Add** をクリックする。
+5. 以下を入力する:
+   - **Variable name**: `NEXT_PUBLIC_API_URL`
+   - **Value**: Cloud Run のサービス URL（例: `https://blog-api-xxxxx-an.a.run.app`）。末尾のスラッシュは付けない。
+   - **Environment**: **Production** にチェック。Preview でも同じ API を使う場合は **Preview** にもチェックする。
+6. **Save** する。
+7. 環境変数を追加・変更した場合は、**Deployments** タブで最新のデプロイの **⋯** → **Retry deployment** を実行するか、main に空コミットを push して再ビルドする。
+
+### 7.7 手順 5: 初回デプロイとビルド確認
+
+1. **Deployments** タブで、初回または再デプロイの **Status** が **Success** になるまで待つ。
+2. 失敗した場合は **View build logs** を開き、以下を確認する:
+   - **Root directory**: `frontend` になっているか。  
+   - **Build command**: `npm run build` が実行されているか。  
+   - **Node のバージョン**: `.nvmrc` がある場合はそのバージョンになっているか。  
+   - エラーメッセージ: `MODULE_NOT_FOUND` の場合は依存不足、`Cannot find module 'next'` の場合はルートディレクトリ誤りや `npm install` 不足の可能性がある。
+3. 成功したら、**View site** または **Open production URL** で `https://プロジェクト名.pages.dev` を開き、トップページや記事一覧が表示されることを確認する。
+4. ブラウザの開発者ツールのネットワークタブで、API リクエストが `NEXT_PUBLIC_API_URL` で設定した Cloud Run の URL に向かっていることを確認する。
+
+### 7.8 手順 6: カスタムドメイン（任意）
+
+1. 同じ Pages プロジェクトの **Custom domains** を開く。
+2. **Set up a custom domain** をクリックし、取得済みのドメイン（例: `blog.example.com`）を入力する。
+3. 案内に従って DNS で **CNAME** を設定する（Cloudflare にネームサーバーを移管している場合はプロキシ設定も可能）。  
+   - ターゲットは通常 `プロジェクト名.pages.dev` または案内に表示される値。
+4. 検証が完了すると、そのドメインで Pages のサイトにアクセスできるようになる。
+
+### 7.9 トラブルシューティング
+
+| 現象 | 確認・対処 |
+| --- | --- |
+| ビルドが「ルートで実行されている」ようなエラー | Root directory が `frontend` になっているか確認。Set root directory にチェックが入っているか確認。 |
+| `npm run build` で Next が見つからない | ルートが `frontend` か確認。`frontend/package.json` に `next` が入っているか確認。 |
+| 本番で API に接続できない | **Settings → Environment variables** で `NEXT_PUBLIC_API_URL` が Production に設定されているか確認。値の末尾にスラッシュがないか、Cloud Run の URL が正しいか確認。変更後は再デプロイが必要。 |
+| Node のバージョン不一致 | `frontend/.nvmrc` に `20` または `22` を入れ、再デプロイ。 |
+| 403 / CORS エラー | Cloud Run 側で CORS が許可されているか、および `NEXT_PUBLIC_API_URL` が正しいか確認。 |
 
 ---
 
