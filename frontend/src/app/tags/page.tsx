@@ -24,7 +24,7 @@ export default async function TagsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+    <div className="container">
       <Header />
 
       <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: 16 }}>
@@ -32,24 +32,15 @@ export default async function TagsPage() {
       </h2>
 
       {error && (
-        <p style={{ color: "#c00", marginBottom: 16 }}>{error}</p>
+        <p style={{ color: "var(--error)", marginBottom: 16 }}>{error}</p>
       )}
 
       {!error && tags.length === 0 && (
-        <p style={{ color: "#666" }}>まだタグがありません。</p>
+        <p style={{ color: "var(--muted)" }}>まだタグがありません。</p>
       )}
 
       {!error && tags.length > 0 && (
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexWrap: "wrap", gap: 12 }}>
           {tags.map((tag) => (
             <li key={tag.id}>
               <Link
@@ -57,9 +48,9 @@ export default async function TagsPage() {
                 style={{
                   display: "inline-block",
                   padding: "6px 12px",
-                  backgroundColor: "#f0f0f0",
+                  backgroundColor: "var(--code-bg)",
                   borderRadius: 4,
-                  color: "inherit",
+                  color: "var(--foreground)",
                   textDecoration: "none",
                   fontSize: "0.9375rem",
                 }}
@@ -72,7 +63,7 @@ export default async function TagsPage() {
       )}
 
       <p style={{ marginTop: 24 }}>
-        <Link href="/" style={{ color: "#666", textDecoration: "underline" }}>
+        <Link href="/" style={{ color: "var(--muted)" }}>
           ← トップに戻る
         </Link>
       </p>

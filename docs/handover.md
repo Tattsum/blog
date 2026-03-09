@@ -14,6 +14,7 @@
 - **関連ドキュメント**:
   - [実装プラン・進捗](implementation-plan.md)
   - [セットアップ・デプロイ手順（詳細）](setup-deploy-checklist.md)
+  - [フロントエンドデザイン方針（Zenn 風・ダークモード）](frontend-design.md)
 
 ---
 

@@ -45,7 +45,7 @@ export default async function PostPage({ params }: Props) {
   if (notFoundErr) notFound();
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+    <div className="container">
       <Header />
 
       <article>
@@ -59,25 +59,19 @@ export default async function PostPage({ params }: Props) {
               display: "block",
               marginBottom: 24,
               fontSize: "0.875rem",
-              color: "#666",
+              color: "var(--muted)",
             }}
           >
             {formatDate(publishedAt)}
           </time>
         )}
-        <div
-          className="post-body"
-          style={{
-            lineHeight: 1.8,
-            fontSize: "1rem",
-          }}
-        >
+        <div className="post-body" style={{ lineHeight: 1.8, fontSize: "1rem" }}>
           <ReactMarkdown>{bodyMarkdown}</ReactMarkdown>
         </div>
       </article>
 
       <p style={{ marginTop: 32 }}>
-        <Link href="/" style={{ color: "#666", textDecoration: "underline" }}>
+        <Link href="/" style={{ color: "var(--muted)" }}>
           ← 一覧に戻る
         </Link>
       </p>

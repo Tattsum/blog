@@ -26,37 +26,25 @@ export default async function HomePage() {
   }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+    <div className="container">
       <Header />
 
       {error && (
-        <p style={{ color: "#c00", marginBottom: 16 }}>{error}</p>
+        <p style={{ color: "var(--error)", marginBottom: 16 }}>{error}</p>
       )}
 
       {!error && posts.length === 0 && (
-        <p style={{ color: "#666" }}>まだ記事がありません。</p>
+        <p style={{ color: "var(--muted)" }}>まだ記事がありません。</p>
       )}
 
       {!error && posts.length > 0 && (
         <section>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          <ul className="article-list">
             {posts.map((post) => (
-              <li
-                key={post.id}
-                style={{
-                  marginBottom: 24,
-                  paddingBottom: 24,
-                  borderBottom: "1px solid #eee",
-                }}
-              >
+              <li key={post.id}>
                 <Link
                   href={`/posts/${encodeURIComponent(post.slug)}`}
-                  style={{
-                    fontSize: "1.125rem",
-                    fontWeight: 600,
-                    color: "inherit",
-                    textDecoration: "none",
-                  }}
+                  className="title"
                 >
                   {post.title}
                 </Link>
@@ -67,7 +55,7 @@ export default async function HomePage() {
                       display: "block",
                       marginTop: 4,
                       fontSize: "0.875rem",
-                      color: "#666",
+                      color: "var(--muted)",
                     }}
                   >
                     {formatDate(post.publishedAt)}
@@ -78,7 +66,7 @@ export default async function HomePage() {
                     style={{
                       marginTop: 8,
                       fontSize: "0.9375rem",
-                      color: "#444",
+                      color: "var(--muted-foreground)",
                       lineHeight: 1.6,
                     }}
                   >
@@ -89,7 +77,7 @@ export default async function HomePage() {
             ))}
           </ul>
           {totalCount > 20 && (
-            <p style={{ marginTop: 16, fontSize: "0.875rem", color: "#666" }}>
+            <p style={{ marginTop: 16, fontSize: "0.875rem", color: "var(--muted)" }}>
               全 {totalCount} 件（1 ページ目を表示中）
             </p>
           )}

@@ -1,12 +1,29 @@
+/* Zenn 風テーマ: 読みやすさ優先・ダークモード対応 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f7f7;
+  --foreground: #1a1a1a;
+  --muted: #666666;
+  --muted-foreground: #444444;
+  --border: #e5e5e5;
+  --card-bg: #ffffff;
+  --link: #2563eb;
+  --link-hover: #1d4ed8;
+  --code-bg: #f1f5f9;
+  --error: #dc2626;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0f0f0f;
     --foreground: #ededed;
+    --muted: #a3a3a3;
+    --muted-foreground: #d4d4d4;
+    --border: #2a2a2a;
+    --card-bg: #171717;
+    --link: #60a5fa;
+    --link-hover: #93c5fd;
+    --code-bg: #1e293b;
+    --error: #f87171;
   }
 }
 
@@ -19,9 +36,11 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.7;
 }
 
 * {
@@ -31,12 +50,79 @@ body {
 }
 
 a {
-  color: inherit;
+  color: var(--link);
   text-decoration: none;
+}
+
+a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
 }
 
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }
+}
+
+/* コンテナ（Zenn 風の最大幅・余白） */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* 記事一覧カード風 */
+.article-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.article-list li {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.article-list li:last-child {
+  border-bottom: none;
+}
+
+.article-list a.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.article-list a.title:hover {
+  color: var(--link);
+}
+
+/* 記事本文（Markdown 由来） */
+.post-body {
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.post-body pre,
+.post-body code {
+  font-family: var(--font-geist-mono), "Consolas", monospace;
+  background: var(--code-bg);
+  border-radius: 4px;
+}
+
+.post-body pre {
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.post-body code {
+  padding: 2px 6px;
+  font-size: 0.9em;
+}
+
+.post-body pre code {
+  padding: 0;
+  background: none;
 }

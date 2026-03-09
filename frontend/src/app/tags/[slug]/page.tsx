@@ -27,36 +27,27 @@ export default async function TagPostsPage({ params }: Props) {
   });
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
+    <main className="container">
       <Header />
       <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 8 }}>
         タグ: {tag.name}
       </h1>
-      <p style={{ fontSize: "0.875rem", color: "#666", marginBottom: 24 }}>
-        <Link href="/tags" style={{ color: "#666" }}>
-          {"← タグ一覧"}
+      <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: 24 }}>
+        <Link href="/tags" style={{ color: "var(--muted)" }}>
+          ← タグ一覧
         </Link>
       </p>
       {listRes.posts.length === 0 ? (
-        <p style={{ color: "#666" }}>このタグの記事はまだありません。</p>
+        <p style={{ color: "var(--muted)" }}>このタグの記事はまだありません。</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <ul className="article-list">
           {listRes.posts.map((post) => (
-            <li
-              key={post.id}
-              style={{
-                borderBottom: "1px solid #eee",
-                padding: "12px 0",
-              }}
-            >
-              <Link
-                href={`/posts/${post.slug}`}
-                style={{ fontWeight: 600, textDecoration: "none", color: "#333" }}
-              >
+            <li key={post.id}>
+              <Link href={`/posts/${post.slug}`} className="title">
                 {post.title}
               </Link>
               {post.summary && (
-                <p style={{ marginTop: 4, fontSize: "0.875rem", color: "#666" }}>
+                <p style={{ marginTop: 4, fontSize: "0.875rem", color: "var(--muted)" }}>
                   {post.summary}
                 </p>
               )}
