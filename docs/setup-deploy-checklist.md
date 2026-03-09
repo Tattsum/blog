@@ -506,6 +506,31 @@ jobs:
       id-token: write
 ```
 
+### 8.3 デプロイ時のマイグレーション（CI で実行）
+
+`deploy-api.yml` では、**デプロイ前に** 本番 Cloud SQL に対して `backend/db/migrations` のマイグレーションを CI 上で実行します（`paths` に `backend/**` が含まれるため、migrations の変更でもデプロイが走り、その際に migrate が実行されます）。
+
+**必要な設定**
+
+1. **GitHub Secrets に `MIGRATION_DSN` を追加**
+   - 値: Cloud SQL に **TCP（3306）で接続するための DSN**。CI では Cloud SQL Auth Proxy 経由で `127.0.0.1:3306` に接続するため、次の形式にする。
+   - 例: `mysql://root:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`
+   - パスワードは Terraform の `db_root_password`（または Secret Manager の `DATABASE_DSN` に含まれる root のパスワード）と同じにする。
+
+2. **デプロイ用サービスアカウントに Cloud SQL Client ロールを付与**
+   - マイグレーション実行時に Cloud SQL Auth Proxy がインスタンスに接続するため、デプロイ用 SA（例: `blog-deploy@PROJECT_ID.iam.gserviceaccount.com`）に **Cloud SQL Client**（`roles/cloudsql.client`）を付与する。
+   - 例（Terraform で作成した `blog-mysql` の場合）:
+     ```bash
+     gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
+       --member="serviceAccount:blog-deploy@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+       --role="roles/cloudsql.client"
+     ```
+
+**挙動**
+
+- `MIGRATION_DSN` が未設定の場合は「Run migrations」ステップはスキップされ、ビルド・デプロイのみ実行される。
+- 設定済みの場合: Auth → Cloud SQL Proxy 起動 → `migrate up` → プロキシ終了 → ビルド・Push → Cloud Run デプロイ、の順で実行される。
+
 ---
 
 ## 9. 動作確認

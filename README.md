@@ -169,7 +169,7 @@ docker build -t blog-api -f backend/Dockerfile .
 
 - **やること一覧（詳細手順・2026年3月時点）**: [docs/setup-deploy-checklist.md](docs/setup-deploy-checklist.md) に、GCP と Cloudflare の設定からデプロイ・動作確認までのチェックリストとコマンド例を記載しています。
 - **概要**: [docs/infrastructure.md](docs/infrastructure.md) を参照。
-- **API（Cloud Run）**: `.github/workflows/deploy-api.yml` で `main` への push（backend 変更時）または手動実行により、Artifact Registry へビルド・プッシュし Cloud Run を更新。GitHub Secrets に `GCP_PROJECT_ID` と `GCP_SA_KEY` を設定するか、[Workload Identity Federation（OIDC）](docs/setup-deploy-checklist.md#8-github-actions-ワークフローoidc-利用時) で鍵なし認証が可能。
+- **API（Cloud Run）**: `.github/workflows/deploy-api.yml` で `main` への push（backend 変更時）または手動実行により、**本番 DB へのマイグレーション（migrate up）** を CI 上で実行したのち、Artifact Registry へビルド・プッシュし Cloud Run を更新。GitHub Secrets に `GCP_PROJECT_ID`、`GCP_SA_KEY`、および（任意）`MIGRATION_DSN` を設定。デプロイ用サービスアカウントに Cloud SQL Client ロールが必要。詳細は [セットアップ手順 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) を参照。
 - **フロント（Cloudflare Pages）**: Git 連携で `main` に push すると自動ビルドされる想定。`NEXT_PUBLIC_API_URL` を Cloudflare の環境変数で設定する。
 - **依存関係の更新**: [Renovate](https://github.com/renovatebot/renovate) の設定を `renovate.json` に用意済み。npm / Go / Dockerfile / GitHub Actions の更新 PR がスケジュールに従って自動作成される。
 

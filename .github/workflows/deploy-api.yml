@@ -1,6 +1,7 @@
 # Cloud Run（API）へのデプロイ。
-# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY（サービスアカウントの JSON キー）
+# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY, MIGRATION_DSN（本番 DB 用。例: mysql://root:PASSWORD@tcp(127.0.0.1:3306)/blog?parseTime=true）
 # 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME
+# デプロイ用サービスアカウントに Cloud SQL Client ロールが必要（マイグレーション実行のため）。
 name: Deploy API (Cloud Run)
 
 on:
@@ -18,6 +19,10 @@ jobs:
   deploy-api:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    env:
+      REGION: ${{ secrets.GCP_REGION || 'asia-northeast1' }}
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      CONNECTION_NAME: ${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION || 'asia-northeast1' }}:blog-mysql
     steps:
       - uses: actions/checkout@v6
 
@@ -30,6 +35,29 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Run migrations (Cloud SQL Proxy + golang-migrate)
+        env:
+          MIGRATION_DSN: ${{ secrets.MIGRATION_DSN }}
+        run: |
+          set -e
+          if [ -z "$MIGRATION_DSN" ]; then
+            echo "MIGRATION_DSN not set, skipping migrations"
+            exit 0
+          fi
+          # Cloud SQL Auth Proxy をダウンロード
+          PROXY_VER="2.14.2"
+          curl -sSLo cloud-sql-proxy "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VER}/cloud-sql-proxy.linux.amd64"
+          chmod +x cloud-sql-proxy
+          # プロキシを起動（バックグラウンド）
+          ./cloud-sql-proxy --port 3306 "$CONNECTION_NAME" &
+          PROXY_PID=$!
+          trap "kill $PROXY_PID 2>/dev/null || true" EXIT
+          sleep 5
+          # golang-migrate でマイグレーション実行
+          curl -sSL https://github.com/golang-migrate/migrate/releases/download/v4.18.0/migrate.linux-amd64.tar.gz | tar xz -C /tmp
+          /tmp/migrate -path backend/db/migrations -database "$MIGRATION_DSN" up
+          kill $PROXY_PID 2>/dev/null || true
 
       - name: Configure Docker for Artifact Registry
         run: |
