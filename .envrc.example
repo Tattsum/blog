@@ -1,0 +1,20 @@
+# GCP・GitHub Actions OIDC 用の環境変数サンプル
+# 使い方: このファイルを .envrc にコピーし、実際の値に書き換えてください。
+# .envrc は .gitignore に含まれており、Git にコミットされません（direnv 利用時は .envrc を許可する必要あり）。
+
+# GCP プロジェクト ID（例: myblog-prod）
+export GCP_PROJECT_ID=your-project-id
+
+# Workload Identity 用
+export GCP_PROJECT_NUMBER=""   # 後で gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)' で設定
+export POOL_NAME=github-actions-pool
+export PROVIDER_NAME=github-oidc
+
+# GitHub（OIDC の attribute condition と principalSet 用）
+# GITHUB_ORG: 組織またはユーザー名（例: Tattsum）
+# GITHUB_REPO: リポジトリ名のみ（例: blog）。principalSet の path が attribute.repository/ORG/REPO になる
+export GITHUB_ORG=your-org-or-username
+export GITHUB_REPO=your-repo-name
+
+# デプロイ用サービスアカウント名
+export SA_NAME=blog-deploy

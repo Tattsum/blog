@@ -65,6 +65,8 @@
 
 GitHub Actions から Cloud Run へデプロイするには、**Workload Identity Federation（OIDC）** を使う方法（鍵なし・推奨）と、**サービスアカウントキー** を GitHub Secrets に登録する方法があります。2026年時点では鍵レス（OIDC）が推奨です。
 
+**機密情報について**: プロジェクト ID や GitHub の org/repo などは `.envrc` に設定し、リポジトリにはコミットしないことを推奨します。`.envrc` は `.gitignore` に含まれており、サンプルは `.envrc.example` を参照してください。
+
 ### 2.1 やること
 
 - [ ] **方法 A（推奨）**: Workload Identity Federation を設定し、GitHub の OIDC で GCP に認証する
@@ -76,10 +78,8 @@ GitHub Actions から Cloud Run へデプロイするには、**Workload Identit
 1. **Workload Identity プールの作成**
 
    ```bash
-   export GCP_PROJECT_ID=your-project-id
+   # 未設定なら .envrc.example を .envrc にコピーして値を設定し、source .envrc または direnv allow
    export GCP_PROJECT_NUMBER=$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')
-   export POOL_NAME=github-actions-pool
-   export PROVIDER_NAME=github-oidc
 
    gcloud iam workload-identity-pools create $POOL_NAME \
      --project=$GCP_PROJECT_ID \
@@ -89,17 +89,21 @@ GitHub Actions から Cloud Run へデプロイするには、**Workload Identit
 
 2. **OIDC プロバイダの追加**
 
+   **重要**: GCP では attribute condition が必須です。条件で参照する claim は attribute-mapping に含める必要があります。
+
    ```bash
-   # 自分の GitHub の org/repo に合わせて変更
+   # 自分の GitHub の org / リポジトリ名に合わせて変更（.envrc で export している場合は不要）
+   # GITHUB_REPO はリポジトリ名のみ（例: blog）。principalSet の path が attribute.repository/ORG/REPO になる
    export GITHUB_ORG=YOUR_ORG_OR_USERNAME
-   export GITHUB_REPO=Tattsum/blog
+   export GITHUB_REPO=blog
 
    gcloud iam workload-identity-pools providers create-oidc $PROVIDER_NAME \
      --project=$GCP_PROJECT_ID \
      --location=global \
      --workload-identity-pool=$POOL_NAME \
      --display-name="GitHub OIDC" \
-     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
+     --attribute-condition="assertion.repository_owner=='$GITHUB_ORG'" \
      --issuer-uri="https://token.actions.githubusercontent.com"
    ```
 
