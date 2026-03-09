@@ -10,7 +10,8 @@
 *.test
 *.out
 vendor/
-gen/
+# ルートの gen/ のみ無視（Go 用）。frontend/src/gen は Cloudflare ビルド用にコミットする
+/gen/
 
 # Node / pnpm
 node_modules/
