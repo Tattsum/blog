@@ -23,6 +23,21 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           securityHeaders(mux),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	// Cloud Run は「ポートでリッスン開始」をタイムアウトで判定するため、
+	// DB 接続より先にリッスンを開始する（DB が遅くても起動失敗にならない）
+	go func() {
+		log.Printf("listening on %s", addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
 	dsn := os.Getenv("DATABASE_DSN")
 	if dsn != "" {
 		db, err := mysql.NewDB(mysql.Config{
@@ -59,19 +74,6 @@ func main() {
 	} else {
 		log.Print("DATABASE_DSN not set; RPC handlers not registered")
 	}
-
-	server := &http.Server{
-		Addr:              addr,
-		Handler:           securityHeaders(mux),
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	go func() {
-		log.Printf("listening on %s", addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
-		}
-	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
