@@ -109,15 +109,18 @@ GitHub Actions から Cloud Run へデプロイするには、**Workload Identit
 
 3. **デプロイ用サービスアカウントの作成とロール付与**
 
+   必ず先にサービスアカウントを作成してから、ロールを付与してください。
+
    ```bash
    export SA_NAME=blog-deploy
    export SA_EMAIL=${SA_NAME}@${GCP_PROJECT_ID}.iam.gserviceaccount.com
 
+   # 3.1 サービスアカウントを作成（未作成の場合のみ）
    gcloud iam service-accounts create $SA_NAME \
      --project=$GCP_PROJECT_ID \
      --display-name="Blog API Deploy"
 
-   # Artifact Registry への push、Cloud Run のデプロイに必要なロール
+   # 3.2 ロールを付与（上記の作成後に実行）
    gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
      --member="serviceAccount:${SA_EMAIL}" \
      --role="roles/artifactregistry.writer"
