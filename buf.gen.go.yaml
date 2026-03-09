@@ -1,0 +1,10 @@
+# Docker / CI の Go ビルド用。Node 不要で gen/ のみ生成する。
+version: v2
+
+plugins:
+  - local: protoc-gen-go
+    out: gen
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
+    out: gen
+    opt: paths=source_relative
