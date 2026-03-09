@@ -39,6 +39,7 @@ pnpm-debug.log*
 # Build / Docker
 *.tar
 .cache/
+.open-next/
 
 # Secrets
 *.pem

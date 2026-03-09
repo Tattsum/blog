@@ -426,7 +426,16 @@ Cloudflare Pages のビルドで使う Node バージョンを固定すると、
 
 3. 上記をコミット・push すると、次回のデプロイからその Node バージョンが使われる。
 
-### 7.6 手順 4: 環境変数の設定
+### 7.6 手順 4: 環境変数と wrangler 設定
+
+#### wrangler 設定ファイル（推奨）
+
+リポジトリの `frontend/wrangler.jsonc` に設定を置くと、ローカルと Cloudflare のデプロイで同じ設定を共有できます。Worker 名は `package.json` の `name`（`blog`）と一致させてください。`vars` に `NEXT_PUBLIC_API_URL` のデフォルト（ローカル用 `http://localhost:8080`）を入れてあり、本番ではダッシュボードまたは後述の手順で上書きできます。
+
+- ローカルで `wrangler pages dev` や `npx wrangler deploy` を実行するときは、このファイルが参照されます。
+- Cloudflare で「設定を wrangler で管理」にしている場合は、このファイルが優先されます。本番 URL を入れる場合は `vars` を変更するか、ダッシュボードの環境変数で上書きしてください。
+
+#### ダッシュボードで環境変数を設定する場合
 
 Cloud Run の API をフロントから呼ぶために、本番用の環境変数を設定します。
 
