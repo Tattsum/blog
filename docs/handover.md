@@ -33,7 +33,7 @@
 - **Docker ビルド**: `gen/` は .gitignore のため CI に無い。`backend/Dockerfile` で buf + protoc-gen-go/connect-go により **ビルド時に proto から Go コードを生成**。`buf.gen.go.yaml`（Go 専用）をリポジトリに追加済み。
 - **フロント（Cloudflare Pages）**:
   - `.gitignore` を `gen/` → `/gen/` に変更し、**frontend/src/gen/**（proto から生成した TypeScript）をリポジトリにコミット済み。Cloudflare の clone に含まれるためビルドが通る。
-  - Cloudflare のビルド設定: ルート `frontend`、**デプロイコマンド** `npx wrangler deploy`（ビルドコマンドは空でも可。wrangler が OpenNext で build まで実行）。
+  - Cloudflare のビルド設定: ルート `frontend`。**デプロイコマンドは必ず `npm run deploy`**（OpenNext の build で `.open-next` を生成してから deploy）。`npx wrangler deploy` のみだと `.open-next/worker.js was not found` で失敗する。
   - **`frontend/package.json` の `name` を `blog` に変更済み**。OpenNext が `WORKER_SELF_REFERENCE` のサービス名に package name を使うため、`frontend` のままだと「Worker 'frontend' が存在しない」でデプロイ失敗する問題を解消。
 - **Makefile**: ルートに `Makefile` を追加。`make docker-api`、`make terraform-*`、`make migrate-up`、`make proto` / `make lint` / `make test` など。デフォルトの `GCP_PROJECT_ID` は `kano-blog-prod`、`REGION` は `asia-northeast1`。
 
@@ -50,7 +50,7 @@
 | Secret Manager | Terraform で作成済み | `DATABASE_DSN`、`ADMIN_API_KEY` |
 | Cloud Run サービス | **作成済み** | デプロイ用ワークフローでマイグレーション・ビルド・デプロイまで成功済み。URL は `terraform output cloud_run_url` で取得。 |
 | デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（MIGRATION_PASSWORD で DSN 組み立て → マイグレーション → ビルド・push → Cloud Run デプロイ） |
-| Cloudflare Pages | 設定済み／要確認 | ルート `frontend`、デプロイコマンド `npx wrangler deploy`。package.json name を `blog` に変更済みで WORKER_SELF_REFERENCE エラーを解消。**次のエージェント**: ビルド再実行でデプロイ成功するか確認し、環境変数 `NEXT_PUBLIC_API_URL`（Cloud Run URL）が設定されているか確認すること。 |
+| Cloudflare Pages / Workers | 設定済み／要確認 | ルート `frontend`。**Deploy command は `npm run deploy`**（`npx wrangler deploy` のみだと `.open-next/worker.js` 未作成で失敗）。環境変数 `NEXT_PUBLIC_API_URL` の設定を確認すること。 |
 
 ---
 
@@ -70,7 +70,7 @@
 **次のエージェント向け**: 以下は現時点で未完了または要確認の項目です。
 
 1. **Cloudflare Pages のデプロイ確認**
-   - `frontend/package.json` の `name` を `blog` に変更済み。Cloudflare で「ビルドを再試行」し、`npx wrangler deploy` が最後まで成功するか確認する。
+   - Cloudflare の **Deploy command** を **`npm run deploy`** に設定する（`npx wrangler deploy` のみだと `.open-next/worker.js was not found` で失敗）。設定後「ビルドを再試行」する。
    - 失敗する場合は [setup-deploy-checklist.md セクション 7](setup-deploy-checklist.md#7-cloudflare-pages-の設定手動) および本ドキュメント「7. 注意事項」を参照。
 
 2. **Cloudflare の環境変数**
