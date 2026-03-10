@@ -20,7 +20,7 @@
 | フェーズ 2 | 完了 | Post/Tag/Auth/AI 各サービス実装済み。Bearer セッションと X-Admin-Key 併存。残りはテスト・エラー共通化（任意）。 |
 | フェーズ 3 | 完了 | 閲覧系・管理画面・タグ別一覧・AI 連携 UI まで実装済み。残りは Vertex AI 連携・SSG/ISR 最適化。 |
 | フェーズ 4 | 一部 | 認証・バリデーションは実施済み。セッション固定/CSRF・N+1/キャッシュ調整は未実施。 |
-| フェーズ 5 | 一部 | CI/CD・deploy-api.yml・setup-deploy-checklist.md まで完了。ログ・監視・アラートは未実施。 |
+| フェーズ 5 | 一部 | CI/CD 済み。**アクセスログ**: `backend/cmd/server` で slog JSON（Cloud Run 時は K_SERVICE により自動）・`X-Request-ID` 付与・`/healthz` はログ除外。監視・アラートは未実施。 |
 | フェーズ 6 | 未着手 | コメント・RSS・マルチテナント・監査ログは計画のみ。 |
 
 ---
@@ -120,7 +120,8 @@
 ## フェーズ 5: 運用・監視・CI/CD
 
 - **ログ・メトリクス**
-  - 構造化ログ（JSON）でリクエスト ID・ユーザー ID・重要イベント（ログイン・記事公開など）を記録。
+  - **（一部実施）** 起動・DB エラー・vertexai 有効/無効は slog。`LOG_FORMAT=json|text` で上書き可（未設定かつ Cloud Run なら JSON）。全リクエスト（`/healthz` 除く）を `request_id`・`method`・`path`・`status`・`duration_ms` で 1 行出力。
+  - 構造化ログでユーザー ID・ログイン・記事公開などの**業務イベント**は未記録（後続）。
   - Cloud Logging / Cloud Monitoring を用いてエラーレート・レイテンシ・リソース利用状況を可視化。
 - **アラート**
   - 5xx レート、レスポンス時間、DB 接続エラーなどに対するアラートを設定。

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,6 +17,8 @@ import (
 )
 
 func main() {
+	initLogging()
+
 	addr := ":" + envOrDefault("PORT", "8080")
 
 	mux := http.NewServeMux()
@@ -27,16 +29,15 @@ func main() {
 
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           securityHeaders(mux),
+		Handler:           requestLog(securityHeaders(mux)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	// Cloud Run は「ポートでリッスン開始」をタイムアウトで判定するため、
-	// DB 接続より先にリッスンを開始する（DB が遅くても起動失敗にならない）
 	go func() {
-		log.Printf("listening on %s", addr)
+		slog.Info("listening", "addr", addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
+			slog.Error("server error", "err", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -49,11 +50,12 @@ func main() {
 			ConnMaxLifetime: time.Hour,
 		})
 		if err != nil {
-			log.Fatalf("database: %v", err)
+			slog.Error("database", "err", err)
+			os.Exit(1)
 		}
 		defer func() {
 			if err := db.Close(); err != nil {
-				log.Printf("db close: %v", err)
+				slog.Error("db close", "err", err)
 			}
 		}()
 
@@ -65,10 +67,10 @@ func main() {
 
 		var textGen appai.TextGenerator
 		if vc, err := vertexai.NewFromEnv(context.Background()); err != nil {
-			log.Printf("vertexai: disabled (%v)", err)
+			slog.Warn("vertexai disabled", "err", err)
 		} else if vc != nil {
 			textGen = appai.NewVertexGemini(vc)
-			log.Print("vertexai: Gemini enabled (Summarize/DraftSupport use Vertex AI)")
+			slog.Info("vertexai enabled")
 		}
 
 		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))
@@ -80,9 +82,9 @@ func main() {
 		mux.Handle(tagPath, tagHandler)
 		mux.Handle(aiPath, aiHandler)
 		mux.Handle(authPath, authHandler)
-		log.Print("RPC handlers registered (PostService, TagService, AIService, AuthService)")
+		slog.Info("rpc handlers registered")
 	} else {
-		log.Print("DATABASE_DSN not set; RPC handlers not registered")
+		slog.Warn("DATABASE_DSN not set; RPC handlers not registered")
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -93,7 +95,7 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("graceful shutdown failed: %v", err)
+		slog.Error("graceful shutdown failed", "err", err)
 	}
 }
 
