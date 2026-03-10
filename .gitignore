@@ -23,6 +23,9 @@ dist/
 
 # IDE
 .idea/
+# Cursor: skills の生成先（正本は skills/src。make -C skills install で作成）
+.cursor/skills/
+
 *.swp
 *.swo
 *~

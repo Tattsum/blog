@@ -20,7 +20,7 @@
 - **永続化**: Cloud SQL (MySQL)
 - **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由）。`GOOGLE_CLOUD_PROJECT` 未設定時はローカル要約／プレースホルダにフォールバック。**Claude / DeepSeek / OpenAI 等の複数プロバイダ対応**は [docs/ai-model-providers.md](docs/ai-model-providers.md) に方針を記載（実装は後続）
 
-詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。**続きの作業や引き継ぎ用**の状況まとめは [docs/handover.md](docs/handover.md) を参照。**エージェント・AI が lint/test を必ず通すためのルール**は [AGENTS.md](AGENTS.md) と [.cursorrules](.cursorrules) を参照。
+詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。**続きの作業や引き継ぎ用**の状況まとめは [docs/handover.md](docs/handover.md) を参照。**エージェント・AI が lint/test を必ず通すためのルール**は [AGENTS.md](AGENTS.md) と [.cursorrules](.cursorrules) を参照。**Cursor 用 Agent Skills のソース**は [skills/](skills/)（[shuymn/dotfiles/skills](https://github.com/shuymn/dotfiles/tree/main/skills) 由来のレイアウト）。`make -C skills install` で `.cursor/skills/` に展開する。
 
 ---
 
