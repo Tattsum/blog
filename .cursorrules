@@ -1,0 +1,23 @@
+# blog モノレポ — Cursor / AI エージェント向け
+
+## 言語
+- ユーザーへの返答は日本語でよい（ユーザールールに従う）。
+
+## 作業完了前の必須確認（必ず実行）
+コードやドキュメントを変更したら、**コミット・タスク完了の宣言の前に**次を実行し、**すべて成功**すること。
+
+1. **Lint**
+   - リポジトリルートで `make lint`
+   - または `npm run lint:md && npm run lint:proto && npm run generate:proto && golangci-lint run ./...`
+
+2. **テスト**
+   - `make test` または `go test ./... -count=1`
+
+3. **フロントエンド**
+   - `frontend/` を変更した場合、または全体の健全性確認として `cd frontend && npm run build`
+
+CI（`.github/workflows/ci.yml`）と同様の手順。失敗した場合は修正して再実行するまで「完了」としない。
+
+## 参照
+- 詳細手順・トラブルシュート: `AGENTS.md`
+- 短縮版: `agent.md`

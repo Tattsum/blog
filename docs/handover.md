@@ -72,16 +72,16 @@
 
 **次のエージェント向け**: Cloudflare 本番まわり（デプロイ・環境変数・動作確認）は対応済み。残りは任意項目と実装プラン上のコードタスクが中心です。
 
-**済（手動対応完了）**
+### 済（手動対応完了）
 
-1. ~~Cloudflare Pages のデプロイ確認~~ … Deploy command を `npm run deploy` にし、デプロイ成功まで確認済み。
-2. ~~Cloudflare の環境変数~~ … **`NEXT_PUBLIC_API_URL`** を本番に設定済み（Cloud Run URL）。
-4. ~~動作確認~~ … `/healthz` 200、フロントで API 動作、管理画面ログイン／API キーまで確認済み。
+- ~~Cloudflare Pages のデプロイ確認~~ … Deploy command を `npm run deploy` にし、デプロイ成功まで確認済み。
+- ~~Cloudflare の環境変数~~ … **`NEXT_PUBLIC_API_URL`** を本番に設定済み（Cloud Run URL）。
+- ~~動作確認~~ … `/healthz` 200、フロントで API 動作、管理画面ログイン／API キーまで確認済み。
 
-残り:
+### 残り
 
-3. **（任意）管理ユーザーの seed**
-   - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
+- **（任意）管理ユーザーの seed**  
+  - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
 
 **参考（すでに実施済み）**: Cloud Run 用イメージ push、Terraform apply、migrate 権限付与、MIGRATION_PASSWORD 設定、CI マイグレーション成功、Docker ビルド時の proto 生成、frontend/src/gen のコミット、package.json name の修正、**Cloudflare デプロイ・NEXT_PUBLIC_API_URL・本番動作確認（2026-03 頃）**。
 
