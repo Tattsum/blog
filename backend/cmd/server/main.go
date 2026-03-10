@@ -23,7 +23,12 @@ func main() {
 	addr := ":" + envOrDefault("PORT", "8080")
 
 	mux := http.NewServeMux()
+	// 生存確認: /health を本番で使用（Cloud Run は末尾 "z" のパスを予約しており /healthz は 404 になる。https://cloud.google.com/run/docs/known-issues#reserved_url_paths）
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte("ok"))
+	})
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
 	})

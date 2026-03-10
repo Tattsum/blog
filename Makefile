@@ -7,8 +7,11 @@ IMAGE_NAME     ?= blog-api
 IMAGE_TAG      ?= latest
 IMAGE          := $(REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/blog-repo/$(IMAGE_NAME):$(IMAGE_TAG)
 
-.PHONY: help docker-build-api docker-push-api docker-api proto lint test migrate-up migrate-down \
+.PHONY: help docker-build-api docker-push-api docker-api docker-build-api-local docker-run-api-local proto lint test migrate-up migrate-down \
 	terraform-init terraform-plan terraform-apply
+
+# ローカル確認用のイメージタグ（push しない）
+IMAGE_LOCAL := blog-api:local
 
 help:
 	@echo "Usage: make [target]"
@@ -17,6 +20,10 @@ help:
 	@echo "  docker-build-api   - コンテナイメージをビルド (GCP_PROJECT_ID, REGION)"
 	@echo "  docker-push-api   - Artifact Registry に push"
 	@echo "  docker-api        - ビルド + push"
+	@echo ""
+	@echo "Docker（ローカル確認用）:"
+	@echo "  docker-build-api-local - イメージをビルド (タグ: blog-api:local)"
+	@echo "  docker-run-api-local   - 上記イメージを 8080 で起動（DATABASE_DSN 等は未設定で起動）"
 	@echo ""
 	@echo "Proto / Lint / Test:"
 	@echo "  proto             - buf generate (Go + TS)"
@@ -41,6 +48,14 @@ docker-push-api:
 	docker push $(IMAGE)
 
 docker-api: docker-build-api docker-push-api
+
+# ローカル確認用（ビルドのみ・タグは blog-api:local）
+docker-build-api-local:
+	docker build --platform linux/amd64 -t $(IMAGE_LOCAL) -f backend/Dockerfile .
+
+# ローカルでコンテナを起動（-p 8080:8080。DB なしで /health 等のみ有効）
+docker-run-api-local:
+	docker run --rm -p 8080:8080 $(IMAGE_LOCAL)
 
 # --- Proto / Lint / Test ---
 proto:

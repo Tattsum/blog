@@ -41,7 +41,7 @@ func requestLog(next http.Handler) http.Handler {
 		rec := &statusRecorder{ResponseWriter: w}
 		start := time.Now()
 		next.ServeHTTP(rec, r)
-		if r.URL.Path == "/healthz" {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/health" {
 			return
 		}
 		duration := time.Since(start)

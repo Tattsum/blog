@@ -65,7 +65,7 @@ migrate -path backend/db/migrations \
 
 ### 5. 出力の利用
 
-- **Cloud Run URL**: `terraform output cloud_run_url` → フロントの `NEXT_PUBLIC_API_URL` や Cloudflare Pages の環境変数に設定
+- **Cloud Run URL**: `terraform output cloud_run_url` は **短い URL**（`...-an.a.run.app`）を返す。本番の `NEXT_PUBLIC_API_URL` には **regional URL**（`https://SERVICE-PROJECT_NUMBER.REGION.run.app`）を **`frontend/.env.production`** と **`frontend/wrangler.jsonc`** に直接記載する（`/health` が通る方）。Cloudflare ダッシュボードの変数には設定しない。
 - **接続名**: `terraform output cloud_sql_connection_name` → 手動接続時などに参照
 
 ## リソース一覧
@@ -74,7 +74,7 @@ migrate -path backend/db/migrations \
 | --- | --- |
 | Cloud SQL (MySQL 8.0) | インスタンス `blog-mysql` + データベース `blog` |
 | Secret Manager | `DATABASE_DSN`（Unix ソケット用 DSN）、`ADMIN_API_KEY` |
-| Cloud Run v2 | サービス `blog-api`（シークレット・Cloud SQL 接続付き） |
+| Cloud Run v2 | サービス名は `cloud_run_service_name`（既定 `blog-backend`）。シークレット・Cloud SQL 接続付き |
 
 ## 注意
 

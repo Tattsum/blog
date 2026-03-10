@@ -14,7 +14,11 @@ region     = "asia-northeast1"
 # 管理 API キー（必須）
 admin_api_key = "your-secure-admin-api-key"
 
+# Cloud Run サービス名（既定 blog-backend。既存 blog-api を Terraform 管理する場合のみ上書き）
+# cloud_run_service_name = "blog-backend"
+
 # 初回 apply 前にイメージをビルド・push しておく
 # 例: docker build -t asia-northeast1-docker.pkg.dev/PROJECT_ID/blog-repo/blog-api:latest -f ../backend/Dockerfile ..
 #      docker push ...
+# イメージ名 blog-api は Artifact Registry のリポジトリ名。Cloud Run サービス名とは別。
 cloud_run_image = "asia-northeast1-docker.pkg.dev/your-gcp-project-id/blog-repo/blog-api:latest"

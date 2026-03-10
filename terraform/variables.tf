@@ -44,6 +44,6 @@ variable "cloud_run_image" {
 
 variable "cloud_run_service_name" {
   type        = string
-  default     = "blog-api"
-  description = "Cloud Run サービス名"
+  default     = "blog-backend"
+  description = "Cloud Run サービス名（本番は blog-backend を推奨。既存 blog-api から移行する場合は tfvars で明示）"
 }

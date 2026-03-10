@@ -20,7 +20,7 @@
 | フェーズ 2 | 完了 | Post/Tag/Auth/AI 各サービス実装済み。Bearer セッションと X-Admin-Key 併存。残りはテスト・エラー共通化（任意）。 |
 | フェーズ 3 | 完了 | 閲覧系・管理画面・タグ別一覧・AI 連携 UI まで実装済み。残りは Vertex AI 連携・SSG/ISR 最適化。 |
 | フェーズ 4 | 一部 | 認証・バリデーションは実施済み。セッション固定/CSRF・N+1/キャッシュ調整は未実施。 |
-| フェーズ 5 | 一部 | CI/CD 済み。**アクセスログ**: `backend/cmd/server` で slog JSON（Cloud Run 時は K_SERVICE により自動）・`X-Request-ID` 付与・`/healthz` はログ除外。監視・アラートは未実施。 |
+| フェーズ 5 | 一部 | CI/CD 済み。**アクセスログ**: `backend/cmd/server` で slog JSON（Cloud Run 時は K_SERVICE により自動）・`X-Request-ID` 付与・`/health` と `/healthz` はログ除外。生存確認は Cloud Run では **`/health`** を使用（`/healthz` は予約のため使用不可）。監視・アラートは未実施。 |
 | フェーズ 6 | 未着手 | コメント・RSS・マルチテナント・監査ログは計画のみ。 |
 
 ---
@@ -61,7 +61,7 @@
 ## フェーズ 2: バックエンド API 実装（connect-go）
 
 - **サーバブートストラップ（実施済み）**
-  - `cmd/server/main.go`: `DATABASE_DSN` で MySQL 接続、`ADMIN_API_KEY` を PostServer/TagServer に渡して登録。`/healthz` とセキュリティヘッダは常時有効。
+  - `cmd/server/main.go`: `DATABASE_DSN` で MySQL 接続、`ADMIN_API_KEY` を PostServer/TagServer に渡して登録。**`/health`** と **`/healthz`** とセキュリティヘッダは常時有効（本番・Cloud Run では `/health` を使用。`/healthz` は Cloud Run で予約のため 404）。
   - `backend/internal/interface/rpc`: domain→proto 変換（converter.go）、管理者キー認証（auth.go、X-Admin-Key ヘッダ）、Slugify、PostServer・TagServer の全 RPC 実装。
 - **サービスごとの実装状況**
   - PostService: ListPosts / GetPost（公開のみ／draft 一覧は要認証）、CreatePost / UpdatePost / DeletePost / SearchPosts / PublishPost 実装済み（作成・更新・削除・公開は X-Admin-Key 必須）。
@@ -120,7 +120,7 @@
 ## フェーズ 5: 運用・監視・CI/CD
 
 - **ログ・メトリクス**
-  - **（一部実施）** 起動・DB エラー・vertexai 有効/無効は slog。`LOG_FORMAT=json|text` で上書き可（未設定かつ Cloud Run なら JSON）。全リクエスト（`/healthz` 除く）を `request_id`・`method`・`path`・`status`・`duration_ms` で 1 行出力。
+  - **（一部実施）** 起動・DB エラー・vertexai 有効/無効は slog。`LOG_FORMAT=json|text` で上書き可（未設定かつ Cloud Run なら JSON）。全リクエスト（`/health` と `/healthz` 除く）を `request_id`・`method`・`path`・`status`・`duration_ms` で 1 行出力。
   - 構造化ログでユーザー ID・ログイン・記事公開などの**業務イベント**は未記録（後続）。
   - Cloud Logging / Cloud Monitoring を用いてエラーレート・レイテンシ・リソース利用状況を可視化。
 - **アラート**

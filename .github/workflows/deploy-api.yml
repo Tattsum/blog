@@ -1,7 +1,8 @@
 # Cloud Run（API）へのデプロイ。
 # 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY
 # マイグレーション用: MIGRATION_PASSWORD（推奨・migrate のパスワード＝tfvars の db_root_password。URL エンコード不要）または MIGRATION_DSN（全文を指定する場合）
-# 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME
+# 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME（Artifact イメージ名・既定 blog-api）
+# 任意: CLOUD_RUN_SERVICE_NAME（未設定時は blog-backend。terraform.tfvars の cloud_run_service_name と揃える）
 # デプロイ用サービスアカウントに Cloud SQL Client ロールが必要（マイグレーション実行のため）。
 name: Deploy API (Cloud Run)
 
@@ -83,9 +84,17 @@ jobs:
           REGION: ${{ secrets.GCP_REGION || 'asia-northeast1' }}
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           IMAGE_NAME: ${{ secrets.IMAGE_NAME || 'blog-api' }}
+          SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME || 'blog-backend' }}
         run: |
-          gcloud run deploy blog-api \
+          # SERVICE_NAME は terraform.tfvars の cloud_run_service_name と一致させること。
+          # --port=8080 はコンテナの待ち受けポート。PORT を env で渡すと予約名で失敗するため渡さない。
+          gcloud run deploy ${SERVICE_NAME} \
+            --project=${PROJECT_ID} \
             --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \
             --platform=managed \
             --region=${REGION} \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --port=8080 \
+            --add-cloudsql-instances=${PROJECT_ID}:${REGION}:blog-mysql \
+            --set-secrets=DATABASE_DSN=DATABASE_DSN:latest,ADMIN_API_KEY=ADMIN_API_KEY:latest \
+            --set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION}
