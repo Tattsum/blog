@@ -344,6 +344,23 @@ gcloud artifacts repositories create blog-repo \
 3. **サービス URL の確認**
    - デプロイ後、コンソールまたは `gcloud run services describe blog-api --region=$REGION --format='value(status.url)'` で URL を取得し、**フロントの本番環境変数 `NEXT_PUBLIC_API_URL` に設定**します（例: `https://blog-api-xxxxx-an.a.run.app`）。
 
+### 6.3 Vertex AI（Gemini）で要約・下書き支援を有効にする（任意）
+
+管理画面の「本文から要約を生成」「下書き支援」は、**Cloud Run に `GOOGLE_CLOUD_PROJECT` が入っていれば** Vertex 上の Gemini を使う。未設定のままならローカル要約／プレースホルダにフォールバックする。
+
+- **Terraform 利用時**: `terraform/vertex_ai.tf` で実行 SA に `roles/aiplatform.user` を付与済み。`cloudrun.tf` で `GOOGLE_CLOUD_PROJECT` と `GOOGLE_CLOUD_LOCATION`（リージョン）を env に渡している。`terraform apply` 後に API を再デプロイすれば有効。
+- **手動デプロイ時**: 次を追加する。
+  - `--set-env-vars=GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,GOOGLE_CLOUD_LOCATION=$REGION`（既存の `--set-env-vars` と結合する場合はカンマ区切りで併記）
+  - 実行 SA に `roles/aiplatform.user` を付与:
+
+    ```bash
+    gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
+      --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+      --role="roles/aiplatform.user"
+    ```
+
+- **モデル変更**: Cloud Run の環境変数 `VERTEX_GEMINI_MODEL`（例: `gemini-2.0-flash-001`）。リージョンによって利用可能モデルが異なる場合がある。
+
 ---
 
 ## 7. Cloudflare Pages の設定（手動）

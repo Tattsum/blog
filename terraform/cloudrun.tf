@@ -40,6 +40,17 @@ resource "google_cloud_run_v2_service" "blog_api" {
         }
       }
 
+      # Vertex AI（Gemini）: AIService が genai SDK で呼び出すときに使用。
+      # roles/aiplatform.user は terraform/vertex_ai.tf で付与。
+      env {
+        name  = "GOOGLE_CLOUD_PROJECT"
+        value = var.project_id
+      }
+      env {
+        name  = "GOOGLE_CLOUD_LOCATION"
+        value = var.region
+      }
+
       resources {
         limits = {
           cpu    = "1"

@@ -15,6 +15,7 @@
   - [実装プラン・進捗](implementation-plan.md)
   - [セットアップ・デプロイ手順（詳細）](setup-deploy-checklist.md)
   - [フロントエンドデザイン方針（Zenn 風・ダークモード）](frontend-design.md)
+  - [AI モデル・プロバイダ拡張（Claude / DeepSeek / OpenAI 等・設計メモ）](ai-model-providers.md)
 
 ---
 

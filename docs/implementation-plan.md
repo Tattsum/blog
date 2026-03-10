@@ -89,11 +89,13 @@
   - `/admin/posts/new`: 新規記事作成（CreatePost）。
   - `/admin/posts/[id]/edit`: 記事編集、公開/下書き、削除。ログアウトボタンあり（AuthService.Logout + セッション削除）。
   - 共通ヘッダーに「管理」リンクを追加。
-- **AI 連携 UI（実施済み・ダミー実装）**
-  - バックエンド: `AIService`（Summarize / DraftSupport）を connect-go で実装。現時点では Vertex AI ではなくローカルロジックで要約・提案本文を生成。
-  - 管理画面: `/admin/posts/[id]/edit` に「本文から要約を生成」（Summarize）ボタンと、「下書き支援」入力＋提案本文プレビュー（DraftSupport）を追加。提案本文はワンクリックで本文に反映可能。
+- **AI 連携 UI（実施済み）**
+  - バックエンド: `AIService`（Summarize / DraftSupport）を connect-go で実装。**Vertex AI 連携**: `GOOGLE_CLOUD_PROJECT` が設定されていれば `google.golang.org/genai`（BackendVertexAI）で Gemini を呼び出す。未設定時は従来どおりローカル要約／プレースホルダにフォールバック。
+  - Terraform: `terraform/vertex_ai.tf` で Cloud Run 実行 SA に `roles/aiplatform.user` を付与。`cloudrun.tf` で `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` を注入。任意で `VERTEX_GEMINI_MODEL`（デフォルト `gemini-2.0-flash-001`）でモデル変更可。
+  - 管理画面: `/admin/posts/[id]/edit` に「本文から要約を生成」（Summarize）と「下書き支援」（DraftSupport）。提案本文はワンクリックで本文に反映可能。
 - **今後の作業**
-  - AI 実装の Vertex AI 連携への切り替え（GCP 認証・コスト・レイテンシを考慮）。
+  - トークン上限・タイムアウトの調整、利用コストの監視、プロンプトの A/B。
+  - **複数プロバイダ・モデル選択**: Gemini 以外（Vertex 経由の Claude / DeepSeek 等、必要に応じ OpenAI / Anthropic 直 API）を選べるようにする。方針は [ai-model-providers.md](ai-model-providers.md) に記載（実装は後続）。
 - **UX / パフォーマンス**
   - SSG/ISR 可能なページは極力静的生成し、SEO とパフォーマンスを最適化。
   - `use cache` など Next.js 16 のキャッシュ機能を適用（ADR で決定する場合は別途記録）。

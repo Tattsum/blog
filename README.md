@@ -18,7 +18,7 @@
 - **API**: Go + connect-go → Cloud Run で稼働
 - **通信**: Connect RPC（HTTP/JSON 互換）。proto から型安全なクライアント・サーバーを生成
 - **永続化**: Cloud SQL (MySQL)
-- **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由のみ）を想定しつつ、現時点ではローカルロジックによるダミー要約・下書き支援を実装済み
+- **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由）。`GOOGLE_CLOUD_PROJECT` 未設定時はローカル要約／プレースホルダにフォールバック。**Claude / DeepSeek / OpenAI 等の複数プロバイダ対応**は [docs/ai-model-providers.md](docs/ai-model-providers.md) に方針を記載（実装は後続）
 
 詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。**続きの作業や引き継ぎ用**の状況まとめは [docs/handover.md](docs/handover.md) を参照。
 
