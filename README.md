@@ -1,237 +1,35 @@
 # blog
 
-個人ブログシステムのモノレポ。管理者が記事を執筆・公開し、読者が一覧・検索・閲覧できる。Markdown と Vertex AI (Gemini) による要約・下書き支援を提供する。
+個人ブログのモノレポ。Next.js（フロント）と Go + connect-go（API）、MySQL。管理画面から記事の執筆・公開、要約・下書き支援（Vertex AI / 未設定時はローカルフォールバック）。
 
----
+## ドキュメント
 
-## 1. プロジェクト概要
+| 内容 | 場所 |
+| --- | --- |
+| アーキテクチャ・ADR・API 仕様・実装プラン | [docs/](docs/) |
+| セットアップ・デプロイ（GCP / Cloudflare） | [docs/setup-deploy-checklist.md](docs/setup-deploy-checklist.md) |
+| 引き継ぎ・インフラの現状 | [docs/handover.md](docs/handover.md) |
+| エージェント向け（lint / test 必須） | [AGENTS.md](AGENTS.md) |
 
-- **リポジトリ名**: blog
-- **対象**: モノレポ（フロントエンド + バックエンド + Proto 定義）
-- **概要**: 記事の CRUD・タグ管理・全文検索・管理者認証・AI 要約・下書き支援を備えた個人ブログ。フロントは Next.js、API は connect-go、インフラは GCP Cloud Run / Cloudflare Pages / Cloud SQL (MySQL) / Vertex AI を想定している。
+## 早わかりコマンド
 
----
-
-## 2. アーキテクチャ（簡潔に）
-
-- **フロント**: Next.js (TypeScript) → Cloudflare Pages で配信
-- **API**: Go + connect-go → Cloud Run で稼働
-- **通信**: Connect RPC（HTTP/JSON 互換）。proto から型安全なクライアント・サーバーを生成
-- **永続化**: Cloud SQL (MySQL)
-- **AI**: Vertex AI (Gemini) で要約・下書き支援（バックエンド経由）。`GOOGLE_CLOUD_PROJECT` 未設定時はローカル要約／プレースホルダにフォールバック。**Claude / DeepSeek / OpenAI 等の複数プロバイダ対応**は [docs/ai-model-providers.md](docs/ai-model-providers.md) に方針を記載（実装は後続）
-
-詳細は [docs/architecture.md](docs/architecture.md)、API 仕様は [docs/api-specification.md](docs/api-specification.md)、実装フェーズは [docs/implementation-plan.md](docs/implementation-plan.md) を参照。**続きの作業や引き継ぎ用**の状況まとめは [docs/handover.md](docs/handover.md) を参照。**エージェント・AI が lint/test を必ず通すためのルール**は [AGENTS.md](AGENTS.md) と [.cursorrules](.cursorrules) を参照。**Cursor 用 Agent Skills のソース**は [skills/](skills/)（[shuymn/dotfiles/skills](https://github.com/shuymn/dotfiles/tree/main/skills) 由来のレイアウト）。`make -C skills install` で `.cursor/skills/` に展開する。
-
----
-
-## 3. 前提条件
-
-いずれも **2026年3月時点の最新版** を想定している。
-
-| ツール | 想定バージョン | 用途 |
-| --- | --- | --- |
-| Go | 1.26+ | バックエンド・コード生成 |
-| Node.js | 24+ (LTS) | フロントエンド・ビルド |
-| pnpm | 10+ | フロントエンドのパッケージ管理 |
-| Docker | 29+ | ローカル DB・Cloud Run ビルド |
-| buf | 1.66+ | Proto の lint・コード生成 |
-| golangci-lint | v2 最新 | Go の lint（`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`） |
-| MySQL | 8.4 (LTS) | ローカル開発用（Docker 可） |
-
----
-
-## 4. ローカル環境のセットアップ手順
-
-### 4.1 リポジトリのクローン
+リポジトリルートで:
 
 ```bash
-git clone https://github.com/Tattsum/blog.git
-cd blog
+make proto          # buf 生成（Go + frontend/src/gen）
+make lint && make test
 ```
 
-### 4.2 依存ツールのインストール
+バックエンド起動・DB・シードの手順は **docs/setup-deploy-checklist.md** または **docs/handover.md** を参照。
 
-```bash
-# Go プラグイン（proto から Go / Connect 生成）
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+## ディレクトリ
 
-# buf（推奨）
-go install github.com/bufbuild/buf/cmd/buf@latest
+| パス | 説明 |
+| --- | --- |
+| `backend/` | Go API — 詳細は [backend/internal/README.md](backend/internal/README.md) |
+| `frontend/` | Next.js — [frontend/README.md](frontend/README.md) |
+| `terraform/` | GCP — [terraform/README.md](terraform/README.md) |
+| `proto/` | Connect 定義 |
+| `skills/` | Cursor 用 Skill ソース — [skills/README.md](skills/README.md) |
 
-# Go の lint
-go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-```
-
-### 4.3 Proto のコード生成
-
-```bash
-# リポジトリルートで（Go: gen/、TypeScript: frontend/src/gen）
-npm run generate:proto
-```
-
-または `PATH="$(pwd)/node_modules/.bin:$PATH" buf generate`。`buf.gen.yaml` で Go と protoc-gen-es（TS）の出力先を指定している。
-
-### 4.4 バックエンドの起動
-
-```bash
-cd backend
-go mod download
-go run ./cmd/server
-```
-
-- ローカルでは環境変数で DB 接続先・Vertex AI 等を指定する（セクション 5 参照）。**AuthService**（Login / GetMe / Logout）は `users` テーブルのメール・bcrypt ハッシュで認証し、セッションはメモリ上に保持。ログイン後は `Authorization: Bearer <token>` で API を呼べる。
-- MySQL は Docker で立てる場合の例:
-
-```bash
-docker run -d --name blog-mysql -e MYSQL_ROOT_PASSWORD=local -e MYSQL_DATABASE=blog -p 3306:3306 mysql:8.4
-```
-
-- 初回は DB マイグレーションを実行する（[golang-migrate](https://github.com/golang-migrate/migrate) をインストール後）:
-
-```bash
-migrate -path backend/db/migrations -database "mysql://root:local@tcp(localhost:3306)/blog" up
-```
-
-- 管理画面のログイン用に、初回だけ管理者ユーザを 1 件登録する（任意）:
-
-```bash
-SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD=yourpassword \
-  DATABASE_DSN="mysql://root:local@tcp(localhost:3306)/blog" \
-  go run ./backend/cmd/seed
-```
-
-  同じメールが既に存在する場合は何もしません。表示名は `SEED_ADMIN_DISPLAY_NAME` で指定できます。
-
-### 4.5 フロントエンドの起動
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-- ブラウザで `http://localhost:3000` を開く。
-- API のベース URL は環境変数 `NEXT_PUBLIC_API_URL` で指定（例: `http://localhost:8080`）。
-
----
-
-## 5. 環境変数一覧
-
-| 変数名 | 説明 | デフォルト | 必須 |
-| --- | --- | --- | --- |
-| **バックエンド** | | | |
-| `DATABASE_DSN` | MySQL 接続文字列 | — | 必須 |
-| `ADMIN_API_KEY` | 管理者 API キー（X-Admin-Key ヘッダで照合、記事・タグの作成・更新・削除・公開に必要） | — | 管理操作時 |
-| `VERTEX_AI_PROJECT` | GCP プロジェクト ID（Vertex AI） | — | AI 利用時 |
-| `VERTEX_AI_LOCATION` | Vertex AI リージョン | `us-central1` | 任意 |
-| `SESSION_SECRET` | セッション署名用シークレット | — | 管理者認証時 |
-| `PORT` | サーバー待ち受けポート | `8080` | 任意 |
-| `SEED_ADMIN_EMAIL` | シード用・管理者メール（`cmd/seed` 実行時） | — | シード時 |
-| `SEED_ADMIN_PASSWORD` | シード用・管理者パスワード（8 文字以上） | — | シード時 |
-| `SEED_ADMIN_DISPLAY_NAME` | シード用・表示名 | 空 | 任意 |
-| **フロントエンド** | | | |
-| `NEXT_PUBLIC_API_URL` | Connect API のベース URL | `http://localhost:8080` | 必須 |
-
-本番では `DATABASE_DSN` や `SESSION_SECRET` 等は GCP Secret Manager 等で注入する想定。
-
----
-
-## 6. 開発時のよく使うコマンド
-
-```bash
-# Markdown の lint（ルートで実行）
-npm run lint:md
-
-# Proto の lint とコード生成
-npm run lint:proto
-buf generate
-
-# Go の lint（要: golangci-lint インストール）
-npm run lint:go
-
-# バックエンドのテスト
-cd backend && go test ./...
-
-# フロントエンドの開発サーバー
-cd frontend && npm run dev
-
-# フロントエンドのビルド（本番用）
-cd frontend && npm run build
-
-# バックエンドのビルド（Docker 用）
-docker build -t blog-api -f backend/Dockerfile .
-```
-
----
-
-## 7. デプロイ手順
-
-- **やること一覧（詳細手順・2026年3月時点）**: [docs/setup-deploy-checklist.md](docs/setup-deploy-checklist.md) に、GCP と Cloudflare の設定からデプロイ・動作確認までのチェックリストとコマンド例を記載しています。
-- **詳細手順**: [docs/setup-deploy-checklist.md](docs/setup-deploy-checklist.md) を参照。
-- **API（Cloud Run）**: `.github/workflows/deploy-api.yml` で `main` への push（backend 変更時）または手動実行により、**本番 DB へのマイグレーション（migrate up）** を CI 上で実行したのち、Artifact Registry へビルド・プッシュし Cloud Run を更新。GitHub Secrets に `GCP_PROJECT_ID`、`GCP_SA_KEY`、および（任意）`MIGRATION_DSN` を設定。デプロイ用サービスアカウントに Cloud SQL Client ロールが必要。詳細は [セットアップ手順 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行) を参照。
-- **フロント（Cloudflare Workers / OpenNext）**: Git 連携で `main` に push すると自動ビルドされる想定。Deploy command は `npm run deploy`。本番の `NEXT_PUBLIC_API_URL` は `frontend/.env.production` と `frontend/wrangler.jsonc` でリポジトリ管理。
-- **依存関係の更新**: [Renovate](https://github.com/renovatebot/renovate) の設定を `renovate.json` に用意済み。npm / Go / Dockerfile / GitHub Actions の更新 PR がスケジュールに従って自動作成される。
-
----
-
-## 8. ディレクトリ構成
-
-```text
-blog/
-├── .github/workflows/ # CI・デプロイ（GitHub Actions）
-├── renovate.json      # 依存関係の自動更新（Renovate Bot）
-├── .vscode/           # エディタ設定・推奨拡張
-├── docs/              # 設計・API 仕様・ADR・実装プラン・引き継ぎ
-│   ├── adr/
-│   ├── architecture.md
-│   ├── api-specification.md
-│   ├── handover.md    # 引き継ぎ・続きの作業用（現状と次のステップ）
-│   └── implementation-plan.md
-├── proto/             # Protocol Buffers 定義
-│   └── blog/v1/
-│       ├── post.proto
-│       ├── tag.proto
-│       ├── auth.proto
-│       └── ai.proto
-├── backend/           # Go API（connect-go）
-│   ├── cmd/server/
-│   ├── db/migrations/ # DB マイグレーション（golang-migrate）
-│   └── internal/
-│       ├── domain/    # ドメイン層（post, tag, user, repository IF）
-│       ├── infrastructure/mysql/  # リポジトリ実装
-│       └── interface/rpc/  # Connect RPC ハンドラ（PostService, TagService）
-├── frontend/          # Next.js アプリ（App Router）
-│   ├── src/
-│   │   ├── app/       # ルート: /, /posts/[slug], /tags, /tags/[slug], /search, /admin, /admin/posts, /admin/posts/new, /admin/posts/[id]/edit
-│   │   ├── gen/       # proto から生成した TypeScript（buf generate）
-│   │   └── lib/       # API クライアント（Connect-Web）
-│   └── package.json
-├── .golangci.yaml      # Go の lint 設定（golangci-lint）
-├── .markdownlint.json  # markdownlint ルール
-├── .markdownlint-cli2.jsonc # markdownlint-cli2 の glob 設定
-├── buf.gen.yaml        # buf コード生成設定
-├── buf.yaml           # buf 設定
-├── go.mod             # Go モジュール（monorepo 全体）
-├── package.json       # ルート（Markdown lint 等）
-└── README.md
-```
-
-`backend/` はドメイン層・API ハンドラまで実装済み。`frontend/` は閲覧系（トップ・記事詳細・タグ一覧）を実装済み。
-
----
-
-## 9. コントリビューションガイド（個人開発・将来用）
-
-- **ブランチ**: 機能は `feature/xxx`、修正は `fix/xxx` を推奨。`main` は常にデプロイ可能な状態を保つ。
-- **コミット**: 意図が分かるメッセージにする（例: `feat(post): add ListPosts RPC`）。
-- **Proto 変更**: `buf lint` と `buf generate` を実行し、生成コードをコミットするかどうかはポリシーに従う。
-- **ドキュメント**: 設計変更時は [docs/architecture.md](docs/architecture.md)、API 変更時は [docs/api-specification.md](docs/api-specification.md) を更新する。
-- **セキュリティ**: 認証情報・シークレットはコミットしない。ローカル用は `.env.example` のみを置き、`.env` は .gitignore する。
-
----
-
-## 注意
-
-- コマンドはすべてコードブロックで記載している。
-- 初見でも迷わないよう、手順はステップ単位で分けてある。実際のディレクトリやファイルが未作成の場合は、上記を参考に作成すること。
+CI は `.github/workflows/ci.yml`。Docker ビルドはルートで `make docker-api`（Makefile 参照）。
