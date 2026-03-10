@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -66,11 +67,23 @@ func main() {
 		adminKey := os.Getenv("ADMIN_API_KEY")
 
 		var textGen appai.TextGenerator
-		if vc, err := vertexai.NewFromEnv(context.Background()); err != nil {
-			slog.Warn("vertexai disabled", "err", err)
-		} else if vc != nil {
-			textGen = appai.NewVertexGemini(vc)
-			slog.Info("vertexai enabled")
+		ctxBg := context.Background()
+		provider := strings.ToLower(strings.TrimSpace(os.Getenv("AI_PROVIDER")))
+		if provider == "vertex-claude" || provider == "claude" {
+			if cl, err := appai.NewVertexClaudeFromEnv(ctxBg); err != nil {
+				slog.Warn("vertex claude disabled", "err", err)
+			} else if cl != nil {
+				textGen = cl
+				slog.Info("ai provider", "name", "vertex-claude")
+			}
+		}
+		if textGen == nil {
+			if vc, err := vertexai.NewFromEnv(ctxBg); err != nil {
+				slog.Warn("vertex gemini disabled", "err", err)
+			} else if vc != nil {
+				textGen = appai.NewVertexGemini(vc)
+				slog.Info("ai provider", "name", "vertex-gemini")
+			}
 		}
 
 		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))

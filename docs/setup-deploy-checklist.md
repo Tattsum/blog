@@ -361,6 +361,14 @@ gcloud artifacts repositories create blog-repo \
 
 - **モデル変更**: Cloud Run の環境変数 `VERTEX_GEMINI_MODEL`（例: `gemini-2.0-flash-001`）。リージョンによって利用可能モデルが異なる場合がある。
 
+### 6.4 Vertex AI 上の Claude を使う（任意）
+
+Gemini の代わりに **Partner モデル（Claude）** を使う場合:
+
+- Cloud Run の環境変数 **`AI_PROVIDER=vertex-claude`**（または `claude`）を設定する。同一の `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` と `roles/aiplatform.user` を利用。
+- 任意で **`VERTEX_CLAUDE_MODEL`**（例: SDK 定数に合わせ `claude-sonnet-4-5-20250929`）。未設定時はコード側デフォルトを使用。リージョンによって Model Garden で利用可否が異なる。
+- 実装は `anthropic-sdk-go` の Vertex オプション（ADC）。本番では Claude が有効なリージョンを選ぶこと。
+
 ---
 
 ## 7. Cloudflare Pages の設定（手動）

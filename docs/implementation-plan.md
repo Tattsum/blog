@@ -95,7 +95,7 @@
   - 管理画面: `/admin/posts/[id]/edit` に「本文から要約を生成」（Summarize）と「下書き支援」（DraftSupport）。提案本文はワンクリックで本文に反映可能。
 - **今後の作業**
   - トークン上限・タイムアウトの調整、利用コストの監視、プロンプトの A/B。
-  - **複数プロバイダ・モデル選択**: Gemini 以外（Vertex 経由の Claude / DeepSeek 等、必要に応じ OpenAI / Anthropic 直 API）を選べるようにする。方針は [ai-model-providers.md](ai-model-providers.md) に記載（実装は後続）。
+  - **複数プロバイダ・モデル選択**: `AI_PROVIDER=vertex-claude` で Vertex 上の Claude（Anthropic SDK + ADC）を利用可。Gemini は従来どおりデフォルト。方針・追加アダプタは [ai-model-providers.md](ai-model-providers.md)。
 - **UX / パフォーマンス**
   - SSG/ISR 可能なページは極力静的生成し、SEO とパフォーマンスを最適化。
   - `use cache` など Next.js 16 のキャッシュ機能を適用（ADR で決定する場合は別途記録）。
