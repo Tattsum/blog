@@ -58,12 +58,10 @@ npm run lint:md && npm run lint:proto && npm run generate:proto && \
 
 ## よくある失敗
 
-| 症状 | 対処 |
-|------|------|
-| `markdownlint` が docs 内でエラー | 見出しは `###` 等を使い、番号付きリストは MD029 に注意（連番を崩さないか箇条書きにする） |
-| `buf lint` | `proto/` 修正後は `buf lint` で確認 |
-| `golangci-lint` | `backend/` 変更後は必ず実行 |
-| フロントビルド失敗 | `frontend` で `npm ci` 済みか、`gen/` の TypeScript がコミットされているか確認 |
+- **`markdownlint` が docs 内でエラー** … 見出しは `###` 等を使う。番号付きリストは MD029 に注意（連番を崩すなら箇条書きにする）。
+- **`buf lint`** … `proto/` 修正後は `buf lint` で確認。
+- **`golangci-lint`** … `backend/` 変更後は必ず実行。
+- **フロントビルド失敗** … `frontend` で `npm ci` 済みか、`gen/` の TypeScript がコミットされているか確認。
 
 ---
 
