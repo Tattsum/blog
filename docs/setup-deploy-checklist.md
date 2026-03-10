@@ -304,6 +304,7 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
 **前提**: `gcloud` でログイン済み（`gcloud auth login`）、デフォルトプロジェクトまたは `GCP_PROJECT_ID` が本番用であること。
 
 1. **環境変数を設定**（リポジトリルートで）:
+
    ```bash
    export GCP_PROJECT_ID=kano-blog-prod
    export REGION=asia-northeast1
@@ -311,18 +312,23 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
    ```
 
 2. **イメージをビルド**（Cloud Run 用・linux/amd64）:
+
    ```bash
    make docker-build-api
    ```
+
    - イメージは `asia-northeast1-docker.pkg.dev/kano-blog-prod/blog-repo/blog-api:latest` にタグ付けされる。
 
 3. **Artifact Registry に push**:
+
    ```bash
    make docker-push-api
    ```
+
    - 初回は `gcloud auth configure-docker` が走る。権限エラーなら `gcloud auth login` と Artifact Registry の権限を確認。
 
 4. **Cloud Run にデプロイ**（既存サービス `blog-backend` を更新）:
+
    ```bash
    gcloud run deploy blog-backend \
      --project=$GCP_PROJECT_ID \
@@ -335,14 +341,17 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
      --set-secrets=DATABASE_DSN=DATABASE_DSN:latest,ADMIN_API_KEY=ADMIN_API_KEY:latest \
      --set-env-vars=GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,GOOGLE_CLOUD_LOCATION=$REGION
    ```
+
    - デプロイ完了時に **Service URL** が表示される。
 
 5. **動作確認**（regional URL で `/health` を確認）:
+
    ```bash
    # プロジェクト番号は describe で確認するか、表示された Service URL から分かる
    curl -sS "https://blog-backend-1098008862560.asia-northeast1.run.app/health"
    # => ok が返れば成功
    ```
+
    - URL が不明な場合:  
      `gcloud run services describe blog-backend --project=$GCP_PROJECT_ID --region=$REGION --format='value(status.url)'`  
      で取得したドメインの **regional 形式**（`https://blog-backend-PROJECT_NUMBER.asia-northeast1.run.app`）で `/health` を叩く。
@@ -357,27 +366,34 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
 デプロイ前に、同じ Docker イメージをローカルで動かして `/health` 等が返ることを確認する手順です。
 
 1. **イメージをビルド**（リポジトリルートで）:
+
    ```bash
    make docker-build-api-local
    ```
+
    - タグは `blog-api:local`。`--platform linux/amd64` でビルドする（Cloud Run と同じ）。
 
 2. **コンテナを起動**（別ターミナルでも可）:
+
    ```bash
    make docker-run-api-local
    ```
+
    - ポート `8080` で待ち受け。`DATABASE_DSN` 未設定のため RPC ハンドラは登録されず、`/health` と `/healthz` のみ有効。
 
 3. **動作確認**（起動したターミナルとは別のターミナルで）:
+
    ```bash
    curl -sS http://127.0.0.1:8080/health
    # => ok
    curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8080/
    # => 404（アプリの 404。コンテナには届いている）
    ```
+
    - 停止はコンテナ起動中のターミナルで `Ctrl+C`。
 
 **DB 付きでローカル実行する場合**（Cloud SQL Proxy 等で DB を用意しているとき）:
+
    ```bash
    docker run --rm -p 8080:8080 \
      -e DATABASE_DSN="mysql://user:pass@tcp(host.docker.internal:3306)/blog?parseTime=true" \

@@ -87,7 +87,9 @@ jobs:
           SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME || 'blog-backend' }}
         run: |
           # SERVICE_NAME は terraform.tfvars の cloud_run_service_name と一致させること。
-          # --port=8080 はコンテナの待ち受けポート。PORT を env で渡すと予約名で失敗するため渡さない。
+          # Secret はプロジェクト番号付きフルパスで指定（Invalid secret path を避ける）。
+          PROJECT_NUM=$(gcloud projects describe ${PROJECT_ID} --format='value(projectNumber)')
+          SECRETS="DATABASE_DSN=projects/${PROJECT_NUM}/secrets/DATABASE_DSN/versions/latest,ADMIN_API_KEY=projects/${PROJECT_NUM}/secrets/ADMIN_API_KEY/versions/latest"
           gcloud run deploy ${SERVICE_NAME} \
             --project=${PROJECT_ID} \
             --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \
@@ -96,5 +98,5 @@ jobs:
             --allow-unauthenticated \
             --port=8080 \
             --add-cloudsql-instances=${PROJECT_ID}:${REGION}:blog-mysql \
-            --set-secrets=DATABASE_DSN=DATABASE_DSN:latest,ADMIN_API_KEY=ADMIN_API_KEY:latest \
+            --set-secrets="${SECRETS}" \
             --set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION}
