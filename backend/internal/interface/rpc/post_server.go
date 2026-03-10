@@ -58,7 +58,7 @@ func (s *PostServer) ListPosts(ctx context.Context, req *connect.Request[blogv1.
 	}
 	list, total, err := s.posts.List(ctx, filter)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	posts := make([]*blogv1.Post, 0, len(list))
 	for _, p := range list {
@@ -78,12 +78,12 @@ func (s *PostServer) GetPost(ctx context.Context, req *connect.Request[blogv1.Ge
 	}
 	p, err := s.posts.GetByID(ctx, id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	if p == nil {
 		p, err = s.posts.GetBySlug(ctx, post.Slug(id))
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
+			return nil, MapHandlerError(err)
 		}
 	}
 	if p == nil {
@@ -126,7 +126,7 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 		UpdatedAt:    now,
 	}
 	if err := s.posts.Create(ctx, p); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.CreatePostResponse{Post: PostToProto(p)}), nil
 }
@@ -142,7 +142,7 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 	}
 	p, err := s.posts.GetByID(ctx, id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	if p == nil {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("post not found"))
@@ -167,7 +167,7 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 	}
 	p.UpdatedAt = time.Now()
 	if err := s.posts.Update(ctx, p); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.UpdatePostResponse{Post: PostToProto(p)}), nil
 }
@@ -182,7 +182,7 @@ func (s *PostServer) DeletePost(ctx context.Context, req *connect.Request[blogv1
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
 	}
 	if err := s.posts.Delete(ctx, id); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.DeletePostResponse{}), nil
 }
@@ -203,7 +203,7 @@ func (s *PostServer) SearchPosts(ctx context.Context, req *connect.Request[blogv
 	}
 	list, total, err := s.posts.Search(ctx, query, page, pageSize)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	posts := make([]*blogv1.Post, 0, len(list))
 	for _, p := range list {
@@ -226,7 +226,7 @@ func (s *PostServer) PublishPost(ctx context.Context, req *connect.Request[blogv
 	}
 	p, err := s.posts.GetByID(ctx, id)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	if p == nil {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("post not found"))
@@ -238,7 +238,7 @@ func (s *PostServer) PublishPost(ctx context.Context, req *connect.Request[blogv
 		p.Publish(now)
 	}
 	if err := s.posts.Update(ctx, p); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.PublishPostResponse{Post: PostToProto(p)}), nil
 }

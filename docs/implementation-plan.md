@@ -69,7 +69,7 @@
   - AuthService: 実装済み（Login / Logout / GetMe、メモリセッション・bcrypt パスワード検証）。AIService: 実装済み（ダミー）。
 - **今後の作業**
   - 管理画面を AuthService（ログイン・セッション）ベースに切り替え（バックエンドは実装済み。フロントは X-Admin-Key と併存可）。
-  - **エラーハンドリングの共通化（一部実施）**: `rpc.MapHandlerError` で repo 由来の生 err を `CodeInternal`＋汎用メッセージに正規化（AuthServer Login/GetMe で利用）。Post/Tag 等の `connect.NewError(connect.CodeInternal, err)` は引き続き err の文言がクライアントに載る可能性があるため、段階的に MapHandlerError または専用ラッパへ寄せる。
+  - **エラーハンドリングの共通化（実施）**: `rpc.MapHandlerError` で repo 由来の err を `CodeInternal`＋汎用メッセージに正規化。AuthServer（Login/GetMe）、PostServer、TagServer の repo 呼び出し失敗時はすべて MapHandlerError 経由に統一済み。
   - サービス層のユニットテスト・ハンドラの E2E テスト。
 
 ---

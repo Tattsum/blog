@@ -39,7 +39,7 @@ func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.Li
 	}
 	list, total, err := s.tags.List(ctx, page, pageSize)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	tags := make([]*blogv1.Tag, 0, len(list))
 	for _, t := range list {
@@ -75,7 +75,7 @@ func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.C
 		CreatedAt: now,
 	}
 	if err := s.tags.Create(ctx, t); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.CreateTagResponse{Tag: TagToProto(t)}), nil
 }
@@ -90,7 +90,7 @@ func (s *TagServer) DeleteTag(ctx context.Context, req *connect.Request[blogv1.D
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
 	}
 	if err := s.tags.Delete(ctx, id); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.DeleteTagResponse{}), nil
 }
