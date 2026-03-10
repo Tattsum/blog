@@ -6,23 +6,24 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/Tattsum/blog/backend/internal/application/ai"
 	blogv1 "github.com/Tattsum/blog/gen/blog/v1"
 	"github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
 )
 
 // AIServer は AIService の connect-go ハンドラ実装。
-// vertex が nil のときはローカル要約／プレースホルダにフォールバックする。
+// generator が nil のときはローカル要約／プレースホルダにフォールバックする。
 type AIServer struct {
 	blogv1connect.UnimplementedAIServiceHandler
 	adminKey     string
 	sessionStore SessionStore
-	vertex       vertexGenerator
+	generator    ai.TextGenerator
 }
 
 // NewAIServer は AIServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
-// vertex に Vertex 等の実装を渡すと Summarize / DraftSupport で利用する（nil なら従来のローカル動作）。
-func NewAIServer(adminKey string, sessionStore SessionStore, vertex vertexGenerator) *AIServer {
-	return &AIServer{adminKey: adminKey, sessionStore: sessionStore, vertex: vertex}
+// generator に Vertex Gemini 等の実装を渡すと Summarize / DraftSupport で利用する（nil なら従来のローカル動作）。
+func NewAIServer(adminKey string, sessionStore SessionStore, generator ai.TextGenerator) *AIServer {
+	return &AIServer{adminKey: adminKey, sessionStore: sessionStore, generator: generator}
 }
 
 // Summarize は本文の先頭から指定文数ぶんの文を抽出する簡易要約を行う。
@@ -38,12 +39,12 @@ func (s *AIServer) Summarize(ctx context.Context, req *connect.Request[blogv1.Su
 	if maxSentences <= 0 || maxSentences > 10 {
 		maxSentences = 3
 	}
-	if s.vertex != nil {
+	if s.generator != nil {
 		prompt := fmt.Sprintf(
 			"次の文章を日本語で、おおよそ%d文以内の要約にまとめてください。要約の本文だけを出力し、前置きや見出しは付けないでください。\n\n---\n%s",
 			maxSentences, text,
 		)
-		summary, err := s.vertex.GenerateText(ctx, prompt)
+		summary, err := s.generator.GenerateText(ctx, prompt)
 		if err != nil {
 			return nil, MapHandlerError(err)
 		}
@@ -61,7 +62,7 @@ func (s *AIServer) DraftSupport(ctx context.Context, req *connect.Request[blogv1
 	prompt := strings.TrimSpace(req.Msg.GetPrompt())
 	body := req.Msg.GetCurrentBody()
 
-	if s.vertex != nil {
+	if s.generator != nil {
 		userPrompt := fmt.Sprintf(
 			"あなたはブログ記事の下書き支援を行います。ユーザーの指示に従い、マークダウン本文として使える案だけを出力してください。説明文や「以下のとおり」などのメタ文は不要です。\n\n【指示】\n%s\n\n【現在の本文】\n%s",
 			prompt, body,
@@ -69,7 +70,7 @@ func (s *AIServer) DraftSupport(ctx context.Context, req *connect.Request[blogv1
 		if prompt == "" && body == "" {
 			userPrompt = "短いブログ記事の導入段落を1つ、マークダウンで書いてください。"
 		}
-		suggested, err := s.vertex.GenerateText(ctx, userPrompt)
+		suggested, err := s.generator.GenerateText(ctx, userPrompt)
 		if err != nil {
 			return nil, MapHandlerError(err)
 		}

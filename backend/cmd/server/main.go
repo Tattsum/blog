@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	appai "github.com/Tattsum/blog/backend/internal/application/ai"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/mysql"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/vertexai"
 	"github.com/Tattsum/blog/backend/internal/interface/rpc"
@@ -62,17 +63,17 @@ func main() {
 		sessionStore := rpc.NewMemSessionStore()
 		adminKey := os.Getenv("ADMIN_API_KEY")
 
-		var vertexClient *vertexai.Client
+		var textGen appai.TextGenerator
 		if vc, err := vertexai.NewFromEnv(context.Background()); err != nil {
 			log.Printf("vertexai: disabled (%v)", err)
 		} else if vc != nil {
-			vertexClient = vc
+			textGen = appai.NewVertexGemini(vc)
 			log.Print("vertexai: Gemini enabled (Summarize/DraftSupport use Vertex AI)")
 		}
 
 		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))
 		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey, sessionStore))
-		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore, vertexClient))
+		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore, textGen))
 		authPath, authHandler := blogv1connect.NewAuthServiceHandler(rpc.NewAuthServer(userRepo, sessionStore, 24*time.Hour))
 
 		mux.Handle(postPath, postHandler)
