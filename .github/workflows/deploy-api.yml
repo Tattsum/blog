@@ -87,14 +87,11 @@ jobs:
           SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME || 'blog-backend' }}
         run: |
           # SERVICE_NAME は terraform.tfvars の cloud_run_service_name と一致させること。
-          # --set-secrets は短い形式 SECRET_NAME:latest のみ受け付ける（フルパス指定は "No secret version specified" になる）。
+          # Cloud Run の設定（Secret, Cloud SQL, env）は Terraform（google_cloud_run_v2_service.blog_api）が唯一のソース・オブ・トゥルース。
+          # CI では「イメージのみ」更新し、それ以外の設定は上書きしない。
           gcloud run deploy ${SERVICE_NAME} \
             --project=${PROJECT_ID} \
             --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \
             --platform=managed \
             --region=${REGION} \
-            --allow-unauthenticated \
-            --port=8080 \
-            --add-cloudsql-instances=${PROJECT_ID}:${REGION}:blog-mysql \
-            --set-secrets=DATABASE_DSN=DATABASE_DSN:latest,ADMIN_API_KEY=ADMIN_API_KEY:latest \
-            --set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION}
+            --allow-unauthenticated
