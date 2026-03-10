@@ -350,18 +350,7 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
 ここまで問題なければ、続けて commit / push してよい。
 
 **Terraform state を既存の `blog-backend` に合わせる場合**（state にまだ `blog-api` が残っているとき）:  
-`terraform plan` で「blog-api を destroy → blog-backend を create」と出るが、**`blog-backend` はすでに手動デプロイ済み**なので、このまま `apply` すると create が「すでに存在する」で失敗する可能性がある。既存の `blog-backend` を state に取り込むには **import** する。
-
-```bash
-cd terraform
-terraform state rm google_cloud_run_v2_service.blog_api
-terraform state rm google_cloud_run_v2_service_iam_member.public
-terraform import google_cloud_run_v2_service.blog_api kano-blog-prod/asia-northeast1/blog-backend
-terraform import google_cloud_run_v2_service_iam_member.public "projects/kano-blog-prod/locations/asia-northeast1/services/blog-backend roles/run.invoker allUsers"
-terraform plan
-```
-
-`terraform.tfvars` の `cloud_run_service_name = "blog-backend"` と import のサービス名を一致させること。import 後は `plan` が No changes または軽微な drift のみになる想定。
+既存の `blog-backend` を state に取り込む import 手順は [terraform-import-blog-backend.md](terraform-import-blog-backend.md) を参照。本番では実施済みのため、別環境や state 再構築時のみ参照する。
 
 ### 6.1.2 イメージのローカルビルド・実行で確認する（push 前の検証）
 
