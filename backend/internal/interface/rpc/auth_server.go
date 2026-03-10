@@ -51,7 +51,7 @@ func (s *AuthServer) Login(ctx context.Context, req *connect.Request[blogv1.Logi
 	}
 	u, err := s.userRepo.VerifyCredentials(ctx, user.Email(email), password)
 	if err != nil {
-		return nil, err
+		return nil, MapHandlerError(err)
 	}
 	if u == nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errInvalidCredentials)
@@ -85,7 +85,7 @@ func (s *AuthServer) GetMe(ctx context.Context, req *connect.Request[blogv1.GetM
 	}
 	u, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, MapHandlerError(err)
 	}
 	if u == nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errInvalidOrExpiredSession)

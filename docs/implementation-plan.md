@@ -68,7 +68,8 @@
   - TagService: ListTags / CreateTag / DeleteTag 実装済み（Create/Delete は X-Admin-Key 必須）。
   - AuthService: 実装済み（Login / Logout / GetMe、メモリセッション・bcrypt パスワード検証）。AIService: 実装済み（ダミー）。
 - **今後の作業**
-  - 管理画面を AuthService（ログイン・セッション）ベースに切り替え（バックエンドは実装済み。フロントは X-Admin-Key と併存可）。エラーハンドリングの共通化。
+  - 管理画面を AuthService（ログイン・セッション）ベースに切り替え（バックエンドは実装済み。フロントは X-Admin-Key と併存可）。
+  - **エラーハンドリングの共通化（一部実施）**: `rpc.MapHandlerError` で repo 由来の生 err を `CodeInternal`＋汎用メッセージに正規化（AuthServer Login/GetMe で利用）。Post/Tag 等の `connect.NewError(connect.CodeInternal, err)` は引き続き err の文言がクライアントに載る可能性があるため、段階的に MapHandlerError または専用ラッパへ寄せる。
   - サービス層のユニットテスト・ハンドラの E2E テスト。
 
 ---

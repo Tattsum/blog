@@ -31,6 +31,8 @@
   - GitHub Secrets は **`MIGRATION_PASSWORD`**（推奨・tfvars の `db_root_password` をそのまま。ワークフロー側で URL エンコード）または `MIGRATION_DSN`。初回のみ DB に `GRANT ... ON blog.* TO 'migrate'@'%'` を実行する必要あり（[setup-deploy-checklist.md 8.3](docs/setup-deploy-checklist.md#83-デプロイ時のマイグレーションci-で実行)）。
   - マイグレーション `000001`: `summary` を MySQL 8 対応のため `TEXT` → `VARCHAR(2000)` に変更済み。dirty 状態の解消は `DROP TABLE schema_migrations` 等でリセットしてから再実行。
 - **Docker ビルド**: `gen/` は .gitignore のため CI に無い。`backend/Dockerfile` で buf + protoc-gen-go/connect-go により **ビルド時に proto から Go コードを生成**。`buf.gen.go.yaml`（Go 専用）をリポジトリに追加済み。
+- **Edge fetch redirect エラー（Cloudflare Workers）**:
+  - Workers では `fetch(..., { redirect: "error" })` が使えず Invalid redirect となる。対策として **グローバル fetch のラップ**（`instrumentation-edge.ts`）に加え、**Connect のトランスポートに `edgeSafeFetch` を渡す**（`frontend/src/lib/edge-safe-fetch.ts`）二重対策を入れ済み。詳細は [frontend-design.md](frontend-design.md) 参照。
 - **フロント（Cloudflare Pages）**:
   - `.gitignore` を `gen/` → `/gen/` に変更し、**frontend/src/gen/**（proto から生成した TypeScript）をリポジトリにコミット済み。Cloudflare の clone に含まれるためビルドが通る。
   - Cloudflare のビルド設定: ルート `frontend`。**デプロイコマンドは必ず `npm run deploy`**（OpenNext の build で `.open-next` を生成してから deploy）。`npx wrangler deploy` のみだと `.open-next/worker.js was not found` で失敗する。
@@ -50,7 +52,7 @@
 | Secret Manager | Terraform で作成済み | `DATABASE_DSN`、`ADMIN_API_KEY` |
 | Cloud Run サービス | **作成済み** | デプロイ用ワークフローでマイグレーション・ビルド・デプロイまで成功済み。URL は `terraform output cloud_run_url` で取得。 |
 | デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（MIGRATION_PASSWORD で DSN 組み立て → マイグレーション → ビルド・push → Cloud Run デプロイ） |
-| Cloudflare Pages / Workers | 設定済み／要確認 | ルート `frontend`。**Deploy command は `npm run deploy`**（`npx wrangler deploy` のみだと `.open-next/worker.js` 未作成で失敗）。環境変数 `NEXT_PUBLIC_API_URL` の設定を確認すること。 |
+| Cloudflare Pages / Workers | **設定・動作確認済み** | ルート `frontend`。Deploy command は `npm run deploy`。`NEXT_PUBLIC_API_URL` 設定済み。`/healthz`・フロント・管理画面の動作確認まで完了。 |
 
 ---
 
@@ -67,24 +69,20 @@
 
 ## 5. 次にやること（続きの作業チェックリスト）
 
-**次のエージェント向け**: 以下は現時点で未完了または要確認の項目です。
+**次のエージェント向け**: Cloudflare 本番まわり（デプロイ・環境変数・動作確認）は対応済み。残りは任意項目と実装プラン上のコードタスクが中心です。
 
-1. **Cloudflare Pages のデプロイ確認**
-   - Cloudflare の **Deploy command** を **`npm run deploy`** に設定する（`npx wrangler deploy` のみだと `.open-next/worker.js was not found` で失敗）。設定後「ビルドを再試行」する。
-   - 失敗する場合は [setup-deploy-checklist.md セクション 7](setup-deploy-checklist.md#7-cloudflare-pages-の設定手動) および本ドキュメント「7. 注意事項」を参照。
+**済（手動対応完了）**
 
-2. **Cloudflare の環境変数**
-   - 本番で API を叩くため、Cloudflare Pages の環境変数に **`NEXT_PUBLIC_API_URL`** を設定する（値は `terraform output cloud_run_url` で取得した Cloud Run の URL）。未設定なら「設定」→「環境変数」で追加。
+1. ~~Cloudflare Pages のデプロイ確認~~ … Deploy command を `npm run deploy` にし、デプロイ成功まで確認済み。
+2. ~~Cloudflare の環境変数~~ … **`NEXT_PUBLIC_API_URL`** を本番に設定済み（Cloud Run URL）。
+4. ~~動作確認~~ … `/healthz` 200、フロントで API 動作、管理画面ログイン／API キーまで確認済み。
+
+残り:
 
 3. **（任意）管理ユーザーの seed**
    - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
 
-4. **動作確認**
-   - Cloud Run の URL に `/healthz` を GET して 200 であること。
-   - Cloudflare Pages の URL でフロントが表示され、API（記事一覧等）が動作すること。
-   - 管理画面（`/admin`）でログインまたは API キー入力ができること。
-
-**参考（すでに実施済み）**: Cloud Run 用イメージ push、Terraform apply、migrate 権限付与、MIGRATION_PASSWORD 設定、CI マイグレーション成功、Docker ビルド時の proto 生成、frontend/src/gen のコミット、package.json name の修正。
+**参考（すでに実施済み）**: Cloud Run 用イメージ push、Terraform apply、migrate 権限付与、MIGRATION_PASSWORD 設定、CI マイグレーション成功、Docker ビルド時の proto 生成、frontend/src/gen のコミット、package.json name の修正、**Cloudflare デプロイ・NEXT_PUBLIC_API_URL・本番動作確認（2026-03 頃）**。
 
 ---
 
@@ -135,11 +133,11 @@ make lint
 make test
 ```
 
-以上を把握しておけば、続きの作業（Cloudflare デプロイ確認 → 環境変数 → 動作確認）をスムーズに進められます。
+以上を把握しておけば、続きの作業（seed やフェーズ 5 のログ／監視など）をスムーズに進められます。
 
 ---
 
 ## 9. レビュー・指摘メモ
 
 - 直近の PR やコードレビューで指摘された内容があれば、ここに要約を追記すること。
-- 現時点では特記事項なし。次のエージェントは **Cloudflare のビルド再試行** と **NEXT_PUBLIC_API_URL** の設定確認を優先してほしい。
+- Cloudflare のデプロイ・`NEXT_PUBLIC_API_URL`・本番動作確認は対応済み。次は **（任意）seed** や **実装プランのフェーズ 5（ログ・監視）** などを優先してよい。
