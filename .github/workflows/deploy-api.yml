@@ -87,8 +87,7 @@ jobs:
           SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME || 'blog-backend' }}
         run: |
           # SERVICE_NAME は terraform.tfvars の cloud_run_service_name と一致させること。
-          # Invalid secret path を避けるため、versions まで含めたフルパスで指定（PROJECT_ID のみ使用、Cloud Resource Manager API 不要）。
-          SECRETS="DATABASE_DSN=projects/${PROJECT_ID}/secrets/DATABASE_DSN/versions/latest,ADMIN_API_KEY=projects/${PROJECT_ID}/secrets/ADMIN_API_KEY/versions/latest"
+          # --set-secrets は短い形式 SECRET_NAME:latest のみ受け付ける（フルパス指定は "No secret version specified" になる）。
           gcloud run deploy ${SERVICE_NAME} \
             --project=${PROJECT_ID} \
             --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \
@@ -97,5 +96,5 @@ jobs:
             --allow-unauthenticated \
             --port=8080 \
             --add-cloudsql-instances=${PROJECT_ID}:${REGION}:blog-mysql \
-            --set-secrets="${SECRETS}" \
+            --set-secrets=DATABASE_DSN=DATABASE_DSN:latest,ADMIN_API_KEY=ADMIN_API_KEY:latest \
             --set-env-vars=GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION}
