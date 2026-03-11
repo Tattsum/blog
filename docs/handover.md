@@ -84,6 +84,9 @@
 - **（任意）管理ユーザーの seed**  
   - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
 
+- **（任意）フェーズ 5 監視・アラート**  
+  - 実装プラン上、アクセスログ・X-Request-ID・slog は実施済み。**Cloud Monitoring でのダッシュボード・アラート（5xx 率・レイテンシ・DB 接続エラー等）は未実施**。必要に応じて [setup-deploy-checklist.md](setup-deploy-checklist.md) に手順を追記するか、GCP コンソールでアラートポリシーを設定する。
+
 **参考（すでに実施済み）**: Cloud Run 用イメージ push、Terraform apply（blog-backend を import して state 統一）、migrate 権限付与、MIGRATION_PASSWORD 設定、CI マイグレーション成功、Docker ビルド時の proto 生成、frontend/src/gen のコミット、package.json name の修正、**Cloudflare デプロイ・NEXT_PUBLIC_API_URL（リポジトリ管理）・本番動作確認（2026-03 頃）**。
 
 ---
@@ -95,7 +98,7 @@
 | `Makefile` | ビルド・push・terraform・migrate・lint などのエントリポイント。Cloud Run 用は `make docker-api`。 |
 | `terraform/*.tf` | GCP リソース定義（Cloud SQL, Secret Manager, Cloud Run）。`terraform.tfvars` は gitignore。 |
 | `terraform/.terraform-version` | tfenv 用（1.6.6）。 |
-| `.github/workflows/deploy-api.yml` | デプロイ用ワークフロー。マイグレーション → ビルド・push → Cloud Run デプロイ。 |
+| `.github/workflows/deploy-api.yml` | デプロイ用ワークフロー。マイグレーション → ビルド・push → Cloud Run へ**イメージのみ**デプロイ（Secret・Cloud SQL・env は Terraform 管理）。 |
 | `.github/workflows/ci.yml` | PR/push 時の lint・test・ビルド。 |
 | `backend/cmd/server/main.go` | API エントリポイント。`PORT` は env 未設定時 8080。 |
 | `backend/db/migrations/` | golang-migrate 用の SQL。 |
