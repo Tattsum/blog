@@ -56,6 +56,12 @@ resource "google_cloud_run_v2_service" "blog_api" {
         value = var.region
       }
 
+      # CORS: ブラウザから別オリジン（tattsum.com 等）で API を呼ぶために必要
+      env {
+        name  = "CORS_ALLOWED_ORIGINS"
+        value = var.cors_allowed_origins
+      }
+
       resources {
         limits = {
           cpu    = "1"

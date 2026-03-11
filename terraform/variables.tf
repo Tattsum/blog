@@ -47,3 +47,9 @@ variable "cloud_run_service_name" {
   default     = "blog-backend"
   description = "Cloud Run サービス名（本番は blog-backend を推奨。既存 blog-api から移行する場合は tfvars で明示）"
 }
+
+variable "cors_allowed_origins" {
+  type        = string
+  default     = "https://tattsum.com,http://localhost:3000"
+  description = "CORS で許可するオリジン（カンマ区切り。フロントのオリジン）"
+}

@@ -82,7 +82,7 @@
 ### 残り
 
 - **（任意）管理ユーザーの seed**  
-  - ローカルで Cloud SQL Auth Proxy を起動したうえで、`DATABASE_DSN='mysql://migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` と `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定し、`go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
+  - ローカルで Cloud SQL Auth Proxy を起動したうえで、**DSN は `mysql://` を付けず** `DATABASE_DSN='migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true'` とし、`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` を設定して `go run ./backend/cmd/seed` を実行。管理画面用の初回ユーザーを 1 件登録できる。
 
 - **（任意）フェーズ 5 監視・アラート**  
   - 実装プラン上、アクセスログ・X-Request-ID・slog は実施済み。**Cloud Monitoring でのダッシュボード・アラート（5xx 率・レイテンシ・DB 接続エラー等）は未実施**。必要に応じて [setup-deploy-checklist.md](setup-deploy-checklist.md) に手順を追記するか、GCP コンソールでアラートポリシーを設定する。

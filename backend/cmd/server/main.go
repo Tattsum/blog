@@ -10,11 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	connectcors "connectrpc.com/cors"
 	appai "github.com/Tattsum/blog/backend/internal/application/ai"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/mysql"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/vertexai"
 	"github.com/Tattsum/blog/backend/internal/interface/rpc"
 	blogv1connect "github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -33,9 +35,22 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 
+	allowedOrigins := strings.Split(envOrDefault("CORS_ALLOWED_ORIGINS", "https://tattsum.com,http://localhost:3000"), ",")
+	for i := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(allowedOrigins[i])
+	}
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   allowedOrigins,
+		AllowedMethods:   connectcors.AllowedMethods(),
+		AllowedHeaders:   append(connectcors.AllowedHeaders(), "Authorization"),
+		ExposedHeaders:   connectcors.ExposedHeaders(),
+		MaxAge:           7200,
+		AllowCredentials: true,
+	}).Handler(securityHeaders(mux))
+
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           requestLog(securityHeaders(mux)),
+		Handler:           requestLog(corsHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

@@ -448,7 +448,47 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
    - **URL が 2 本ある場合**: サービスによっては **regional**（`....asia-northeast1.run.app`）と **短い方**（`...-an.a.run.app`）の両方が付く。**`/health` や `/` で Google の 404 HTML になるときは、もう一方の URL を試す**。フロントの **`NEXT_PUBLIC_API_URL` は実際に応答が返る方**に合わせる。
    - 取得した URL（末尾スラッシュなし）を **Cloudflare / `wrangler.jsonc` / `frontend/.env.production`** の `NEXT_PUBLIC_API_URL` に設定する。
 
-### 6.3 Vertex AI（Gemini）で要約・下書き支援を有効にする（任意）
+### 6.3 管理ユーザー（seed）の作成
+
+管理画面（`/admin`）でメール・パスワードでログインするための**初回管理者ユーザー**を 1 件登録する手順です。`backend/cmd/seed` が `users` テーブルに bcrypt ハッシュで INSERT します。
+
+**前提**: Cloud SQL のマイグレーションが完了しており、**migrate ユーザーに `blog`  DB への権限が付与済み**（[8.3 の「migrate に権限付与」](#83-デプロイ時のマイグレーションci-で実行) を参照）であること。
+
+1. **Cloud SQL Auth Proxy を起動する**（別ターミナルで起動したままにする）
+
+   ```bash
+   export GCP_PROJECT_ID=your-project-id
+   export REGION=asia-northeast1
+   export CONNECTION_NAME=$GCP_PROJECT_ID:$REGION:blog-mysql
+   # プロキシをインストールしていない場合: https://cloud.google.com/sql/docs/mysql/connect-auth-proxy#install
+   cloud-sql-proxy --port 3306 $CONNECTION_NAME
+   ```
+
+   - 接続名は `terraform output cloud_sql_connection_name` でも確認可能。
+
+2. **環境変数を設定し、seed を実行する**（リポジトリルートで）
+
+   - **migrate のパスワード**: Terraform の `terraform.tfvars` の **`db_root_password`** と同じ値（Terraform の `google_sql_user.migrate` で同じパスワードを設定している）。
+   - **DSN 形式**: go-sql-driver/mysql は **`mysql://` スキーム非対応**のため、**`migrate:パスワード@tcp(127.0.0.1:3306)/blog?parseTime=true`** のように先頭に `mysql://` を付けないこと。付けるとユーザー名が `mysql` と解釈され `Access denied for user 'mysql'@'...'` になる。
+   - **パスワードに `+` が含まれる場合**: **シェルからシングルクォートで渡すときは `+` をそのまま**でよい（`export DATABASE_DSN='migrate:パスワード@tcp(...)'`）。`%2B` にするとドライバがデコードせずそのまま送り、認証に失敗することがある。コード内で DSN を組み立てる場合は percent エンコード（`+` → `%2B` 等）を行う。
+
+   ```bash
+   export DATABASE_DSN='migrate:ここにdb_root_passwordを入れる@tcp(127.0.0.1:3306)/blog?parseTime=true'
+   export SEED_ADMIN_EMAIL='admin@example.com'
+   export SEED_ADMIN_PASSWORD='8文字以上のパスワード'
+   # 任意: 表示名
+   export SEED_ADMIN_DISPLAY_NAME='管理者'
+
+   go run ./backend/cmd/seed
+   ```
+
+   - **SEED_ADMIN_PASSWORD** は 8 文字以上必須。既に同じメールのユーザーがいる場合は「user already exists」と表示され、INSERT はスキップされる。
+   - 成功時は `created admin user: admin@example.com (id=...)` と表示される。
+
+3. **管理画面でログイン**
+   - フロント（本番またはローカル）の `/admin` で、上記のメールとパスワードでログインできる。
+
+### 6.4 Vertex AI（Gemini）で要約・下書き支援を有効にする（任意）
 
 管理画面の「本文から要約を生成」「下書き支援」は、**Cloud Run に `GOOGLE_CLOUD_PROJECT` が入っていれば** Vertex 上の Gemini を使う。未設定のままならローカル要約／プレースホルダにフォールバックする。
 
@@ -465,7 +505,7 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
 
 - **モデル変更**: Cloud Run の環境変数 `VERTEX_GEMINI_MODEL`（例: `gemini-2.0-flash-001`）。リージョンによって利用可能モデルが異なる場合がある。
 
-### 6.4 Vertex AI 上の Claude を使う（任意）
+### 6.5 Vertex AI 上の Claude を使う（任意）
 
 Gemini の代わりに **Partner モデル（Claude）** を使う場合:
 
