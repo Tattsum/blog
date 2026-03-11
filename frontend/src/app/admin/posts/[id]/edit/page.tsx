@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAdmin } from "../../../AdminProvider";
 import { AdminGate } from "../../../AdminGate";
+import { getUnpublishFlagForPublishButton } from "./publish-utils";
 import type { Post } from "@/gen/blog/v1/post_pb";
 import { Post_Status } from "@/gen/blog/v1/post_pb";
 
@@ -313,7 +314,7 @@ function EditPostForm() {
           </button>
           <button
             type="button"
-            onClick={() => handlePublish(!isPublished)}
+            onClick={() => handlePublish(getUnpublishFlagForPublishButton(isPublished))}
             disabled={submitting}
             style={{
               padding: "8px 16px",
