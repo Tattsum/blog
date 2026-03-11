@@ -650,6 +650,8 @@ jobs:
 
 `deploy-api.yml` では、**デプロイ前に** 本番 Cloud SQL に対して `backend/db/migrations` のマイグレーションを CI 上で実行します（`paths` に `backend/**` が含まれるため、migrations の変更でもデプロイが走り、その際に migrate が実行されます）。
 
+**CI の Cloud Run デプロイの役割**: `gcloud run deploy` では **イメージ・リージョン・allow-unauthenticated のみ**を指定します。Secret（DATABASE_DSN, ADMIN_API_KEY）・Cloud SQL 接続・環境変数（GOOGLE_CLOUD_PROJECT 等）は **Terraform（`terraform/cloudrun.tf`）が唯一のソース・オブ・トゥルース**のため、CI では上書きしません。初回または設定変更時は `terraform apply` で Cloud Run を更新し、以降の push では CI がイメージだけ差し替えます。
+
 #### 必要な設定
 
 1. **（初回のみ）マイグレーション用ユーザー `migrate` に権限を付与**
@@ -680,6 +682,7 @@ jobs:
 5. **Cloud Run サービス名を CI と Terraform で揃える**
    - **デプロイ先サービス名**: `deploy-api.yml` は **`gcloud run deploy ${SERVICE_NAME}`** とし、**`SERVICE_NAME`** は GitHub Secret **`CLOUD_RUN_SERVICE_NAME`**（未設定時は **`blog-backend`**）。
    - **`terraform.tfvars`** の **`cloud_run_service_name`** も同じ値（例: `blog-backend`）にする。Artifact Registry のイメージ名（例: `blog-api`）とは別。
+   - **CI の deploy はイメージのみ更新**（Secret・Cloud SQL・env は Terraform 管理のため `gcloud run deploy` では指定しない）。
    - **Terraform state がまだ `blog-api` のまま**の場合: `terraform state list | grep cloud_run` で確認。サービスを手動で `blog-backend` に作り直したあと Terraform を合わせるなら、`terraform import` で既存 `blog-backend` を取り込むか、state から古いリソースを外してから `apply` する（運用に合わせて [handover.md](handover.md) を参照）。
 
 #### 8.3.1 初回セットアップ詳細（Step 2・Step 3）

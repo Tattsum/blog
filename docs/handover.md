@@ -53,7 +53,7 @@
 | Cloud SQL (MySQL) | Terraform で作成済み | インスタンス `blog-mysql`、DB `blog`。migrate ユーザー（host %）も Terraform で作成。 |
 | Secret Manager | Terraform で作成済み | `DATABASE_DSN`、`ADMIN_API_KEY` |
 | Cloud Run サービス | **作成済み** | サービス名 **`blog-backend`**（`gcloud run deploy blog-backend ...`）。デプロイ後の **Service URL** は regional 形式（例: `https://blog-backend-1098008862560.asia-northeast1.run.app`）。Terraform では `cloud_run_service_name` 既定を `blog-backend` に合わせ済み。URL は `terraform output cloud_run_url` または `gcloud run services describe blog-backend --format='value(status.url)'` で取得。 |
-| デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（MIGRATION_PASSWORD → migrate → ビルド・push → **`gcloud run deploy`**）。サービス名は Secret **`CLOUD_RUN_SERVICE_NAME`**（未設定時 **`blog-backend`**）。`terraform.tfvars` の `cloud_run_service_name` と一致させる。 |
+| デプロイ用 GitHub Actions | 設定済み | `deploy-api.yml`（MIGRATION_PASSWORD → migrate → ビルド・push → **`gcloud run deploy`** でイメージのみ更新）。Cloud Run の Secret・Cloud SQL・env は Terraform（`cloudrun.tf`）が管理するため CI では指定しない。サービス名は Secret **`CLOUD_RUN_SERVICE_NAME`**（未設定時 **`blog-backend`**）。`terraform.tfvars` の `cloud_run_service_name` と一致させる。 |
 | Cloudflare Pages / Workers | **設定・動作確認済み** | ルート `frontend`。Deploy command は `npm run deploy`。**`NEXT_PUBLIC_API_URL`** はリポジトリの **`frontend/.env.production`** と **`frontend/wrangler.jsonc` の `env.production.vars`** で管理（本番は regional URL）。Cloudflare ダッシュボードの「変数とシークレット」には **設定しない**（リポジトリを正とする）。生存確認は **`/health`**（Cloud Run では `/healthz` は予約のため使用不可）。 |
 
 ---
