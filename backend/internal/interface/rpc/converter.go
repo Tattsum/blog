@@ -34,6 +34,7 @@ func PostToProto(p *post.Post) *blogv1.Post {
 		Slug:         p.Slug.String(),
 		BodyMarkdown: p.BodyMarkdown,
 		Summary:      p.Summary,
+		ThumbnailUrl: p.ThumbnailURL,
 		TagIds:       p.TagIDs,
 		Status:       postStatusToProto(p.Status),
 		CreatedAt:    timeToRFC3339(p.CreatedAt),

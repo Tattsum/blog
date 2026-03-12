@@ -25,6 +25,7 @@ export default async function PostPage({ params }: Props) {
   const { slug } = await params;
   let title = "";
   let bodyMarkdown = "";
+  let thumbnailUrl = "";
   let publishedAt = "";
   let notFoundErr = false;
 
@@ -36,6 +37,7 @@ export default async function PostPage({ params }: Props) {
     } else {
       title = post.title;
       bodyMarkdown = post.bodyMarkdown ?? "";
+      thumbnailUrl = post.thumbnailUrl ?? "";
       publishedAt = post.publishedAt ?? "";
     }
   } catch {
@@ -49,6 +51,19 @@ export default async function PostPage({ params }: Props) {
       <Header />
 
       <article>
+        {thumbnailUrl && (
+          <div style={{ marginBottom: 24 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbnailUrl}
+              alt=""
+              width={800}
+              height={450}
+              style={{ width: "100%", maxWidth: 800, height: "auto", borderRadius: 4, objectFit: "cover" }}
+              decoding="async"
+            />
+          </div>
+        )}
         <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 8 }}>
           {title}
         </h1>

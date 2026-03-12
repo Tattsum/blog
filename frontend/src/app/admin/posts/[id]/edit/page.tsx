@@ -27,6 +27,7 @@ function EditPostForm() {
   const [slug, setSlug] = useState("");
   const [bodyMarkdown, setBodyMarkdown] = useState("");
   const [summary, setSummary] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [tagIds, setTagIds] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +54,7 @@ function EditPostForm() {
           setSlug(p.slug ?? "");
           setBodyMarkdown(p.bodyMarkdown ?? "");
           setSummary(p.summary ?? "");
+          setThumbnailUrl(p.thumbnailUrl ?? "");
           setTagIds((p.tagIds ?? []).join(", "));
         }
       })
@@ -76,9 +78,10 @@ function EditPostForm() {
         slug: slug.trim() || undefined,
         bodyMarkdown,
         summary,
+        thumbnailUrl: thumbnailUrl.trim() || undefined,
         tagIds: tagIds.trim() ? tagIds.split(",").map((s) => s.trim()).filter(Boolean) : [],
       });
-      setPost((prev) => (prev ? { ...prev, title: title.trim(), slug: slug.trim(), bodyMarkdown, summary } : null));
+      setPost((prev) => (prev ? { ...prev, title: title.trim(), slug: slug.trim(), bodyMarkdown, summary, thumbnailUrl: thumbnailUrl.trim() } : null));
     } catch (e) {
       setError(e instanceof Error ? e.message : "更新に失敗しました");
     } finally {
@@ -228,6 +231,16 @@ function EditPostForm() {
           >
             {aiBusy ? "要約生成中…" : "本文から要約を生成"}
           </button>
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>サムネイル URL（任意）</label>
+          <input
+            type="url"
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            placeholder="https://..."
+            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+          />
         </div>
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>タグ ID（カンマ区切り）</label>

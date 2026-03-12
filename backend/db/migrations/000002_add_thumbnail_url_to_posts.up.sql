@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN thumbnail_url VARCHAR(1024) NULL AFTER summary;

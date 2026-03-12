@@ -24,6 +24,7 @@ type Post struct {
 	Slug         Slug
 	BodyMarkdown string
 	Summary      string
+	ThumbnailURL string // サムネイル画像の URL（空の場合は未設定）
 	TagIDs       []string
 	Status       Status
 	CreatedAt    time.Time

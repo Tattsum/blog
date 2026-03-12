@@ -2,14 +2,39 @@ package rpc
 
 import (
 	"errors"
+	"net/url"
 	"regexp"
+	"strings"
 	"unicode/utf8"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(?:[-_][a-z0-9]+)*$`)
 
+const maxThumbnailURLLen = 1024
+
+// validateThumbnailURL はサムネイル URL を検証する。空の場合は有効。http/https のみ、長さ上限 1024。
+func validateThumbnailURL(s string) error {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	if utf8.RuneCountInString(s) > maxThumbnailURLLen {
+		return errors.New("thumbnail_url must be at most 1024 characters")
+	}
+	u, err := url.Parse(s)
+	if err != nil {
+		return errors.New("thumbnail_url is not a valid URL")
+	}
+	switch u.Scheme {
+	case "http", "https":
+		return nil
+	default:
+		return errors.New("thumbnail_url must use http or https")
+	}
+}
+
 // validatePostFields は記事の入力値を検証する。
-func validatePostFields(title, slug, body, summary string, tagIDs []string) error {
+func validatePostFields(title, slug, body, summary, thumbnailURL string, tagIDs []string) error {
 	titleLen := utf8.RuneCountInString(title)
 	if titleLen == 0 || titleLen > 120 {
 		return errors.New("title must be between 1 and 120 characters")
@@ -36,6 +61,9 @@ func validatePostFields(title, slug, body, summary string, tagIDs []string) erro
 		if utf8.RuneCountInString(id) > 64 {
 			return errors.New("tag_id is too long")
 		}
+	}
+	if err := validateThumbnailURL(thumbnailURL); err != nil {
+		return err
 	}
 	return nil
 }

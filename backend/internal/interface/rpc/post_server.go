@@ -109,8 +109,9 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 	}
 	body := req.Msg.GetBodyMarkdown()
 	summary := req.Msg.GetSummary()
+	thumbnailURL := strings.TrimSpace(req.Msg.GetThumbnailUrl())
 	tagIDs := req.Msg.GetTagIds()
-	if err := validatePostFields(title, slug, body, summary, tagIDs); err != nil {
+	if err := validatePostFields(title, slug, body, summary, thumbnailURL, tagIDs); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	now := time.Now()
@@ -120,6 +121,7 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 		Slug:         post.Slug(slug),
 		BodyMarkdown: req.Msg.GetBodyMarkdown(),
 		Summary:      req.Msg.GetSummary(),
+		ThumbnailURL: thumbnailURL,
 		TagIDs:       req.Msg.GetTagIds(),
 		Status:       post.StatusDraft,
 		CreatedAt:    now,
@@ -159,10 +161,13 @@ func (s *PostServer) UpdatePost(ctx context.Context, req *connect.Request[blogv1
 	if req.Msg.Summary != nil {
 		p.Summary = *req.Msg.Summary
 	}
+	if req.Msg.ThumbnailUrl != nil {
+		p.ThumbnailURL = strings.TrimSpace(*req.Msg.ThumbnailUrl)
+	}
 	if req.Msg.TagIds != nil {
 		p.TagIDs = req.Msg.TagIds
 	}
-	if err := validatePostFields(p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, p.TagIDs); err != nil {
+	if err := validatePostFields(p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, p.ThumbnailURL, p.TagIDs); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	p.UpdatedAt = time.Now()

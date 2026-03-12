@@ -43,6 +43,23 @@ export default async function TagPostsPage({ params }: Props) {
         <ul className="article-list">
           {listRes.posts.map((post) => (
             <li key={post.id}>
+              {post.thumbnailUrl && (
+                <Link
+                  href={`/posts/${post.slug}`}
+                  style={{ display: "block", marginBottom: 8 }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.thumbnailUrl}
+                    alt=""
+                    width={640}
+                    height={360}
+                    style={{ width: "100%", maxWidth: 640, height: "auto", borderRadius: 4, objectFit: "cover" }}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
+              )}
               <Link href={`/posts/${post.slug}`} className="title">
                 {post.title}
               </Link>

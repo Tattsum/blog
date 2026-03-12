@@ -22,9 +22,9 @@ func NewPostRepository(db *sql.DB) *PostRepository {
 // Create は記事を1件挿入する。
 func (r *PostRepository) Create(ctx context.Context, p *post.Post) error {
 	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO posts (id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.ID, p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, int32(p.Status),
+		`INSERT INTO posts (id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.ID, p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, nullString(p.ThumbnailURL), int32(p.Status),
 		p.CreatedAt, p.UpdatedAt, nullTime(p.PublishedAt),
 	)
 	if err != nil {
@@ -35,22 +35,23 @@ func (r *PostRepository) Create(ctx context.Context, p *post.Post) error {
 
 // GetByID は ID で記事を1件取得する。
 func (r *PostRepository) GetByID(ctx context.Context, id string) (*post.Post, error) {
-	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts WHERE id = ?`, id)
+	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE id = ?`, id)
 }
 
 // GetBySlug は slug で記事を1件取得する。
 func (r *PostRepository) GetBySlug(ctx context.Context, slug post.Slug) (*post.Post, error) {
-	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts WHERE slug = ?`, slug.String())
+	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE slug = ?`, slug.String())
 }
 
 func (r *PostRepository) getOne(ctx context.Context, query string, arg interface{}) (*post.Post, error) {
 	var p post.Post
 	var slug string
+	var thumbnailURL sql.NullString
 	var status int32
 	var publishedAt sql.NullTime
 	err := r.db.QueryRowContext(ctx, query, arg).Scan(
-		&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &status,
-		&p.CreatedAt, &p.UpdatedAt, &publishedAt,
+		&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &thumbnailURL,
+		&status, &p.CreatedAt, &p.UpdatedAt, &publishedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -59,6 +60,7 @@ func (r *PostRepository) getOne(ctx context.Context, query string, arg interface
 		return nil, err
 	}
 	p.Slug = post.Slug(slug)
+	p.ThumbnailURL = nullStringVal(thumbnailURL)
 	p.Status = post.Status(status)
 	p.PublishedAt = nullTimePtr(publishedAt)
 	tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
@@ -103,7 +105,7 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	var listQuery string
 	var listArgs []interface{}
 	if filter.TagID != "" {
-		listQuery = `SELECT p.id, p.title, p.slug, p.body_markdown, p.summary, p.status, p.created_at, p.updated_at, p.published_at
+		listQuery = `SELECT p.id, p.title, p.slug, p.body_markdown, p.summary, p.thumbnail_url, p.status, p.created_at, p.updated_at, p.published_at
 			FROM posts p INNER JOIN post_tags pt ON pt.post_id = p.id AND pt.tag_id = ? WHERE 1=1`
 		listArgs = []interface{}{filter.TagID}
 		if filter.Status != post.StatusUnspecified {
@@ -113,7 +115,7 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 		listQuery += ` ORDER BY p.updated_at DESC LIMIT ? OFFSET ?`
 		listArgs = append(listArgs, limit, offset)
 	} else {
-		listQuery = `SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts WHERE 1=1`
+		listQuery = `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE 1=1`
 		listArgs = []interface{}{}
 		if filter.Status != post.StatusUnspecified {
 			listQuery += ` AND status = ?`
@@ -133,12 +135,14 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	for rows.Next() {
 		var p post.Post
 		var slug string
+		var thumbnailURL sql.NullString
 		var status int32
 		var publishedAt sql.NullTime
-		if err := rows.Scan(&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &status, &p.CreatedAt, &p.UpdatedAt, &publishedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &thumbnailURL, &status, &p.CreatedAt, &p.UpdatedAt, &publishedAt); err != nil {
 			return nil, 0, err
 		}
 		p.Slug = post.Slug(slug)
+		p.ThumbnailURL = nullStringVal(thumbnailURL)
 		p.Status = post.Status(status)
 		p.PublishedAt = nullTimePtr(publishedAt)
 		tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
@@ -151,8 +155,8 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 // Update は記事を1件更新する。
 func (r *PostRepository) Update(ctx context.Context, p *post.Post) error {
 	_, err := r.db.ExecContext(ctx,
-		`UPDATE posts SET title=?, slug=?, body_markdown=?, summary=?, status=?, updated_at=?, published_at=? WHERE id=?`,
-		p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, int32(p.Status), p.UpdatedAt, nullTime(p.PublishedAt), p.ID,
+		`UPDATE posts SET title=?, slug=?, body_markdown=?, summary=?, thumbnail_url=?, status=?, updated_at=?, published_at=? WHERE id=?`,
+		p.Title, p.Slug.String(), p.BodyMarkdown, p.Summary, nullString(p.ThumbnailURL), int32(p.Status), p.UpdatedAt, nullTime(p.PublishedAt), p.ID,
 	)
 	if err != nil {
 		return err
@@ -187,7 +191,7 @@ func (r *PostRepository) Search(ctx context.Context, query string, page, pageSiz
 	}
 
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, title, slug, body_markdown, summary, status, created_at, updated_at, published_at FROM posts
+		`SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts
 		 WHERE status=2 AND (title LIKE ? OR body_markdown LIKE ? OR summary LIKE ?)
 		 ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
 		like, like, like, pageSize, offset,
@@ -201,12 +205,14 @@ func (r *PostRepository) Search(ctx context.Context, query string, page, pageSiz
 	for rows.Next() {
 		var p post.Post
 		var slug string
+		var thumbnailURL sql.NullString
 		var status int32
 		var publishedAt sql.NullTime
-		if err := rows.Scan(&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &status, &p.CreatedAt, &p.UpdatedAt, &publishedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.Title, &slug, &p.BodyMarkdown, &p.Summary, &thumbnailURL, &status, &p.CreatedAt, &p.UpdatedAt, &publishedAt); err != nil {
 			return nil, 0, err
 		}
 		p.Slug = post.Slug(slug)
+		p.ThumbnailURL = nullStringVal(thumbnailURL)
 		p.Status = post.Status(status)
 		p.PublishedAt = nullTimePtr(publishedAt)
 		tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
@@ -257,4 +263,18 @@ func nullTimePtr(n sql.NullTime) *time.Time {
 		return nil
 	}
 	return &n.Time
+}
+
+func nullString(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+func nullStringVal(n sql.NullString) string {
+	if !n.Valid {
+		return ""
+	}
+	return n.String
 }

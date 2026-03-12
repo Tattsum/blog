@@ -42,6 +42,23 @@ export default async function HomePage() {
           <ul className="article-list">
             {posts.map((post) => (
               <li key={post.id}>
+                {post.thumbnailUrl && (
+                  <Link
+                    href={`/posts/${encodeURIComponent(post.slug)}`}
+                    style={{ display: "block", marginBottom: 8 }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.thumbnailUrl}
+                      alt=""
+                      width={640}
+                      height={360}
+                      style={{ width: "100%", maxWidth: 640, height: "auto", borderRadius: 4, objectFit: "cover" }}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </Link>
+                )}
                 <Link
                   href={`/posts/${encodeURIComponent(post.slug)}`}
                   className="title"

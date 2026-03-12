@@ -21,6 +21,7 @@ message Post {
   string created_at = 8;  // RFC3339
   string updated_at = 9;  // RFC3339
   string published_at = 10; // RFC3339, 公開時のみ
+  string thumbnail_url = 11; // サムネイル画像の URL（任意）
 }
 
 message ListPostsRequest {
@@ -49,6 +50,7 @@ message CreatePostRequest {
   string body_markdown = 3;
   string summary = 4;
   repeated string tag_ids = 5;
+  string thumbnail_url = 6; // サムネイル画像の URL（任意）
 }
 
 message CreatePostResponse {
@@ -62,6 +64,7 @@ message UpdatePostRequest {
   optional string body_markdown = 4;
   optional string summary = 5;
   repeated string tag_ids = 6;
+  optional string thumbnail_url = 7; // サムネイル画像の URL（任意）
 }
 
 message UpdatePostResponse {

@@ -21,6 +21,7 @@ function NewPostForm() {
   const [slug, setSlug] = useState("");
   const [bodyMarkdown, setBodyMarkdown] = useState("");
   const [summary, setSummary] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [tagIds, setTagIds] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +43,7 @@ function NewPostForm() {
         slug: slug.trim() || undefined,
         bodyMarkdown,
         summary,
+        thumbnailUrl: thumbnailUrl.trim() || undefined,
         tagIds: tagIds.trim() ? tagIds.split(",").map((s) => s.trim()).filter(Boolean) : [],
       });
       const id = res.post?.id;
@@ -97,6 +99,16 @@ function NewPostForm() {
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
+            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>サムネイル URL（任意）</label>
+          <input
+            type="url"
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            placeholder="https://..."
             style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
           />
         </div>

@@ -104,7 +104,23 @@ function AdminPostsList() {
               }}
             >
               <div>
-                <Link
+                {post.thumbnailUrl && (
+                  <Link
+                    href={`/admin/posts/${post.id}/edit`}
+                    style={{ display: "inline-block", marginRight: 12, verticalAlign: "middle" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.thumbnailUrl}
+                      alt=""
+                      width={48}
+                      height={48}
+                      style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 4 }}
+                    />
+                  </Link>
+                )}
+                <span style={{ verticalAlign: "middle" }}>
+                  <Link
                   href={`/admin/posts/${post.id}/edit`}
                   style={{ fontWeight: 600, color: "inherit", textDecoration: "none" }}
                 >
@@ -119,6 +135,7 @@ function AdminPostsList() {
                 >
                   {post.status === Post_Status.PUBLISHED ? "公開" : "下書き"}
                 </span>
+              </span>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 {post.status === Post_Status.PUBLISHED ? (

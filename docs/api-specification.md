@@ -31,6 +31,7 @@ message Post {
   string created_at = 8;
   string updated_at = 9;
   string published_at = 10;
+  string thumbnail_url = 11; // サムネイル画像 URL（任意）
 }
 
 service PostService {
@@ -161,6 +162,7 @@ service PostService {
 | リクエスト | body_markdown | string | 必須 | 本文（Markdown） |
 | リクエスト | summary | string | 任意 | 要約 |
 | リクエスト | tag_ids | string[] | 任意 | タグ ID の配列 |
+| リクエスト | thumbnail_url | string | 任意 | サムネイル画像の URL（http/https、最大 1024 文字） |
 | レスポンス | post | Post | 必須 | 作成された記事（DRAFT） |
 
 #### CreatePost — エラーコード
@@ -181,6 +183,7 @@ service PostService {
 | リクエスト | body_markdown | string | 任意 | 本文 |
 | リクエスト | summary | string | 任意 | 要約 |
 | リクエスト | tag_ids | string[] | 任意 | タグ ID 配列 |
+| リクエスト | thumbnail_url | string | 任意 | サムネイル画像の URL（http/https、最大 1024 文字） |
 | レスポンス | post | Post | 必須 | 更新後の記事 |
 
 #### UpdatePost — エラーコード
