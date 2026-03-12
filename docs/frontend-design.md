@@ -1,6 +1,6 @@
 # フロントエンドデザイン方針
 
-フロントの見た目とテーマの指針をまとめたドキュメントです。
+フロントの見た目とテーマの指針をまとめたドキュメントです。Zenn 風の見栄えとスマートデバイス対応の詳細は [ui-responsive-design.md](ui-responsive-design.md) を参照すること。
 
 ---
 
@@ -12,6 +12,7 @@
   - 余白とタイポグラフィ（行間・フォントサイズ）を整え、長文でも負担が少ないようにする。
   - 装飾は控えめにし、記事一覧・記事詳細・タグ一覧などで一貫したトーンを保つ。
 - **実装**: `frontend/src/app/globals.css` で CSS 変数（`--background`, `--foreground`, `--muted`, `--border`, `--link`, `--code-bg` など）を定義し、各ページ・コンポーネントでこれを参照する。
+- **詳細**: タイポグラフィ・余白・コンポーネントの見た目・レスポンシブは [ui-responsive-design.md](ui-responsive-design.md) に記載する。
 
 ---
 
@@ -27,9 +28,10 @@
 
 ## 3. レイアウト・コンポーネント
 
-- **コンテナ**: 本文幅は最大 720px 程度に制限し、中央寄せ。`.container` クラスで統一。
+- **コンテナ**: 本文幅は最大 720px 程度に制限し、中央寄せ。`.container` クラスで統一。スマートデバイスでは左右パディングを縮小する（[ui-responsive-design.md](ui-responsive-design.md) のブレークポイント・コンテナを参照）。
 - **記事一覧**: 一覧項目は `.article-list` で区切り線と余白を統一。タイトルリンクは `.title` でホバー時にアクセント色にする。
 - **コードブロック**: `.post-body pre` / `.post-body code` でモノスペースと背景色（`--code-bg`）を適用し、ダークモードでも読みやすくする。
+- **レスポンシブ**: モバイル・タブレット・デスクトップのブレークポイント、タッチターゲット、ヘッダー／記事一覧の振る舞いは [ui-responsive-design.md](ui-responsive-design.md) に従う。
 
 ---
 
@@ -54,4 +56,8 @@ Cloudflare Workers（Edge）では、`fetch` の `redirect` オプションに `
 | `frontend/src/instrumentation-edge.ts` | fetch の `redirect: "error"` を `"follow"` に置き換えるラッパー（グローバル） |
 | `frontend/src/lib/edge-safe-fetch.ts` | Connect 用に `redirect` を正規化する fetch（トランスポートに渡す） |
 
-以上を踏まえ、新規ページやコンポーネントを追加する際は、色指定に CSS 変数を使い、必要に応じて `.container` や `.article-list` を利用すること。
+## 6. 関連ドキュメント
+
+- [ui-responsive-design.md](ui-responsive-design.md) — Zenn 風 UI の詳細要件とスマートデバイス対応（ブレークポイント・タッチターゲット・実装優先順序）。
+
+以上を踏まえ、新規ページやコンポーネントを追加する際は、色指定に CSS 変数を使い、必要に応じて `.container` や `.article-list` を利用し、レスポンシブは ui-responsive-design.md に従うこと。

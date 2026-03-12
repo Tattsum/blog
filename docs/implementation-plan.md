@@ -135,6 +135,8 @@
 
 ## フェーズ 6: 機能拡張ロードマップ（例）
 
+- **Zenn 風 UI・レスポンシブ**
+  - 見栄えを Zenn に近づけ、スマートデバイス（スマートフォン・タブレット）で閲覧・操作しやすくする。タイポグラフィ・余白・コンポーネントの統一と、ブレークポイント・タッチターゲット・ヘッダー／一覧のレスポンシブ対応。詳細と実装優先順序は [ui-responsive-design.md](ui-responsive-design.md) を参照。
 - **サムネイル・本文メディア・アップローダー**
   - 記事サムネイル URL、本文画像・動画のホスティング、管理画面からのアップロード機能。詳細は [post-thumbnail-and-media.md](post-thumbnail-and-media.md) を参照。
   - **実装済み（Phase 1・2・3）**: DB に `thumbnail_url`、Proto/API/管理画面・一覧・詳細でサムネイル表示。`POST /upload` で管理者認証必須の multipart アップロード、ローカルまたは GCS ストレージ、管理画面で「ファイルを選択してアップロード」（サムネイル）と「画像・動画をアップロードして挿入」（本文 Markdown）。環境変数: ローカルは `UPLOAD_DIR`（任意で `BASE_URL`）、GCS は `MEDIA_STORAGE=gcs` と `GCS_MEDIA_BUCKET`。R2 は未実装（同一 `MediaStorage` インターフェースで追加可能）。**Phase 3**: 記事詳細の本文で YouTube / Vimeo の埋め込み許可 URL を iframe 表示（`MarkdownBody`・`embed-url.ts`）。
