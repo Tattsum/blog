@@ -46,7 +46,12 @@ function NewPostForm() {
       });
       setThumbnailUrl(url);
     } catch (err) {
-      setUploadThumbError(err instanceof Error ? err.message : "アップロードに失敗しました");
+      const msg = err instanceof Error ? err.message : "アップロードに失敗しました";
+      setUploadThumbError(
+        msg === "unauthorized"
+          ? "認証エラーです。一度ログアウトして再ログインするか、管理者キーで入れ直してください。"
+          : msg
+      );
     } finally {
       setUploadingThumb(false);
     }
@@ -74,7 +79,12 @@ function NewPostForm() {
         setBodyMarkdown((prev) => prev + insert);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "画像のアップロードに失敗しました");
+      const msg = err instanceof Error ? err.message : "画像のアップロードに失敗しました";
+      setError(
+        msg === "unauthorized"
+          ? "認証エラーです。一度ログアウトして再ログインするか、管理者キーで入れ直してください。"
+          : msg
+      );
     }
   }
 
