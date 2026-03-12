@@ -560,6 +560,16 @@ Gemini の代わりに **Partner モデル（Claude）** を使う場合:
   - **Terraform で Cloud Run を管理している場合**: `terraform.tfvars` に `media_storage = "r2"` と R2 用変数（`r2_account_id`, `r2_access_key_id`, `r2_secret_access_key`, `r2_bucket`, `r2_public_base_url`）を設定して `terraform apply` する。例は [terraform/terraform.tfvars.example](../terraform/terraform.tfvars.example) を参照。
 - 再デプロイ後、管理画面からアップロードすると、設定した公開 URL ベース + オブジェクトキーで永続します。
 
+#### R2 カスタムドメインで Error 1014（CNAME Cross-User Banned）が出る場合
+
+画像 URL（例: `https://asset.tattsum.com/xxx.png`）にアクセスすると 403 と Error 1014 が返る場合、[Cloudflare 公式](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1014/)では次の原因が挙げられています。
+
+1. **ゾーン hold（Zone Hold）**: カスタムドメインのゾーン（例: `tattsum.com`）に [Zone Hold](https://developers.cloudflare.com/fundamentals/account/account-security/zone-holds/) が有効だと、R2 用サブドメインが有効化されず 1014 になる。**対処**: Cloudflare ダッシュボードで該当ゾーン → セキュリティ／アカウント設定から Zone Hold を解除する（Enterprise プランで利用している場合など）。
+2. **ゾーンが banned**: フィッシング報告や未払いなどでゾーンが制限されている。**対処**: [Abuse 報告](https://developers.cloudflare.com/fundamentals/reference/report-abuse/complaint-types/)の有無を確認し、必要なら審査依頼。未払いインボイスがあれば [支払い](https://developers.cloudflare.com/billing/pay-invoices-overdue-balances/)を完了する。
+3. **別アカウントのゾーン**: CNAME 先が別 Cloudflare アカウントのゾーンの場合、デフォルトでは禁止。**対処**: R2 バケットとカスタムドメインのゾーンが**同一アカウント**であることを確認。別アカウントで運用している場合は [Cloudflare for SaaS](https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/) の利用を検討。
+
+同一アカウントで Zone Hold も問題ない場合でも 1014 が出る場合は、Cloudflare サポートまたはアカウント担当に問い合わせることを推奨します。暫定対応として、`r2_public_base_url` を **r2.dev の Public development URL**（例: `https://pub-xxxx.r2.dev`）に変更すると画像は表示されます（レート制限あり・開発用途向け）。
+
 既に壊れた画像は、該当記事を編集してサムネイルを再アップロードするか、サムネイル欄を空にして保存してください。詳細は [post-thumbnail-and-media.md](post-thumbnail-and-media.md) の「5.5 本番環境（Cloud Run 等）での注意」を参照。
 
 ---
@@ -699,6 +709,7 @@ Cloudflare Pages のビルドで使う Node バージョンを固定すると、
 | Node のバージョン不一致 | `frontend/.nvmrc` に `20` または `22` を入れ、再デプロイ。 |
 | 403 / CORS エラー | Cloud Run 側で CORS が許可されているか、および `NEXT_PUBLIC_API_URL` が正しいか確認。 |
 | **POST /upload が 404** | 環境変数（`MEDIA_STORAGE=r2` 等）が入っていても、**動いているコンテナイメージが古い**と `/upload` は登録されない。**GitHub Actions の「Deploy API (Cloud Run)」ワークフローを手動実行**（Actions タブ → Deploy API → Run workflow）して最新コードでイメージをビルド・デプロイする。ローカルで `make docker-api` して push する場合は、Artifact Registry への `artifactregistry.repositories.uploadArtifacts` 権限が必要。 |
+| **R2 カスタムドメインで画像が Error 1014（CNAME Cross-User Banned）** | 上記「6.6 R2 を選ぶ場合」直下の **R2 カスタムドメインで Error 1014** の項を参照。Zone Hold の解除、ゾーン制限（フィッシング報告・未払い）の解消、同一アカウント確認。暫定は `r2_public_base_url` を r2.dev の URL に変更。 |
 
 ---
 
