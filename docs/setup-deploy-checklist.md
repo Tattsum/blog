@@ -698,6 +698,7 @@ Cloudflare Pages のビルドで使う Node バージョンを固定すると、
 | 本番で API に接続できない | リポジトリの **`frontend/.env.production`** と **`frontend/wrangler.jsonc`** の `NEXT_PUBLIC_API_URL` が **regional URL**（例: `https://blog-backend-1098008862560.asia-northeast1.run.app`）になっているか確認。末尾スラッシュなし。**Cloudflare ダッシュボードに同名の変数がある場合は削除**（リポジトリを正とする）。変更後は push して再デプロイ。 |
 | Node のバージョン不一致 | `frontend/.nvmrc` に `20` または `22` を入れ、再デプロイ。 |
 | 403 / CORS エラー | Cloud Run 側で CORS が許可されているか、および `NEXT_PUBLIC_API_URL` が正しいか確認。 |
+| **POST /upload が 404** | 環境変数（`MEDIA_STORAGE=r2` 等）が入っていても、**動いているコンテナイメージが古い**と `/upload` は登録されない。**GitHub Actions の「Deploy API (Cloud Run)」ワークフローを手動実行**（Actions タブ → Deploy API → Run workflow）して最新コードでイメージをビルド・デプロイする。ローカルで `make docker-api` して push する場合は、Artifact Registry への `artifactregistry.repositories.uploadArtifacts` 権限が必要。 |
 
 ---
 
