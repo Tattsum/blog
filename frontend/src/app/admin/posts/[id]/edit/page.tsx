@@ -217,45 +217,43 @@ function EditPostForm() {
   }
 
   if (!admin?.isReady) return null;
-  if (loading) return <p style={{ color: "#666" }}>読み込み中…</p>;
-  if (error && !post) return <p style={{ color: "#c00" }}>{error}</p>;
-  if (!post) return <p style={{ color: "#666" }}>記事が見つかりません。</p>;
+  if (loading) return <p className="admin-muted">読み込み中…</p>;
+  if (error && !post) return <p className="admin-error">{error}</p>;
+  if (!post) return <p className="admin-muted">記事が見つかりません。</p>;
 
   const isPublished = post.status === Post_Status.PUBLISHED;
 
   return (
     <>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: 16 }}>
-        編集: {post.title || "(無題)"}
-      </h2>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 600 }}>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>タイトル *</label>
+      <h2 className="admin-page-title">編集: {post.title || "(無題)"}</h2>
+      <form onSubmit={handleSubmit} className="admin-form">
+        <div className="admin-form-group">
+          <label>タイトル *</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+            className="admin-input"
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>スラグ</label>
+        <div className="admin-form-group">
+          <label>スラグ</label>
           <input
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+            className="admin-input"
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>本文（Markdown）</label>
+        <div className="admin-form-group">
+          <label>本文（Markdown）</label>
           <textarea
             ref={bodyInputRef}
             value={bodyMarkdown}
             onChange={(e) => setBodyMarkdown(e.target.value)}
             rows={12}
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4, fontFamily: "monospace" }}
+            className="admin-textarea mono"
           />
           <div style={{ marginTop: 8 }}>
             <input
@@ -265,56 +263,39 @@ function EditPostForm() {
               id="body-image-upload-edit"
               onChange={handleBodyImageUpload}
             />
-            <label
-              htmlFor="body-image-upload-edit"
-              style={{
-                display: "inline-block",
-                padding: "6px 12px",
-                border: "1px solid #333",
-                borderRadius: 4,
-                background: "transparent",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-              }}
-            >
+            <label htmlFor="body-image-upload-edit" className="admin-label-btn">
               画像・動画をアップロードして挿入
             </label>
           </div>
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>要約</label>
+        <div className="admin-form-group">
+          <label>要約</label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+            className="admin-textarea"
           />
           <button
             type="button"
             onClick={handleSummarize}
             disabled={submitting || aiBusy}
-            style={{
-              marginTop: 8,
-              padding: "6px 12px",
-              border: "1px solid #333",
-              borderRadius: 4,
-              background: "transparent",
-              cursor: submitting || aiBusy ? "not-allowed" : "pointer",
-              fontSize: "0.875rem",
-            }}
+            className="admin-btn-secondary"
+            style={{ marginTop: 8 }}
           >
             {aiBusy ? "要約生成中…" : "本文から要約を生成"}
           </button>
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>サムネイル URL（任意）</label>
+        <div className="admin-form-group">
+          <label>サムネイル URL（任意）</label>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <input
               type="url"
               value={thumbnailUrl}
               onChange={(e) => setThumbnailUrl(e.target.value)}
               placeholder="https://..."
-              style={{ flex: 1, minWidth: 200, padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+              className="admin-input"
+              style={{ flex: 1, minWidth: 200 }}
             />
             <input
               type="file"
@@ -327,51 +308,38 @@ function EditPostForm() {
               type="button"
               disabled={uploadingThumb}
               onClick={() => thumbInputRef.current?.click()}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #333",
-                borderRadius: 4,
-                background: "transparent",
-                cursor: uploadingThumb ? "not-allowed" : "pointer",
-                fontSize: "0.875rem",
-              }}
+              className="admin-btn-secondary"
             >
               {uploadingThumb ? "アップロード中…" : "ファイルを選択してアップロード"}
             </button>
           </div>
-          {uploadThumbError && <p style={{ color: "#c00", fontSize: "0.875rem", marginTop: 4 }}>{uploadThumbError}</p>}
+          {uploadThumbError && <p className="admin-error" style={{ fontSize: "0.875rem", marginTop: 4 }}>{uploadThumbError}</p>}
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>タグ ID（カンマ区切り）</label>
+        <div className="admin-form-group">
+          <label>タグ ID（カンマ区切り）</label>
           <input
             type="text"
             value={tagIds}
             onChange={(e) => setTagIds(e.target.value)}
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+            className="admin-input"
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>下書き支援（AI）</label>
+        <div className="admin-form-group">
+          <label>下書き支援（AI）</label>
           <input
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="例: 結論を強くして"
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4, marginBottom: 8 }}
+            className="admin-input"
+            style={{ marginBottom: 8 }}
           />
           <button
             type="button"
             onClick={handleDraftSupport}
             disabled={submitting || aiBusy}
-            style={{
-              padding: "6px 12px",
-              border: "1px solid #333",
-              borderRadius: 4,
-              background: "transparent",
-              cursor: submitting || aiBusy ? "not-allowed" : "pointer",
-              fontSize: "0.875rem",
-              marginBottom: 8,
-            }}
+            className="admin-btn-secondary"
+            style={{ marginBottom: 8 }}
           >
             {aiBusy ? "提案取得中…" : "提案本文を取得"}
           </button>
@@ -381,60 +349,25 @@ function EditPostForm() {
                 value={suggestedBody}
                 readOnly
                 rows={6}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ccc",
-                  borderRadius: 4,
-                  fontFamily: "monospace",
-                  marginBottom: 8,
-                }}
+                className="admin-textarea mono"
+                style={{ marginBottom: 8 }}
               />
-              <button
-                type="button"
-                onClick={applySuggestedBody}
-                style={{
-                  padding: "6px 12px",
-                  border: "1px solid #333",
-                  borderRadius: 4,
-                  background: "#333",
-                  color: "#fff",
-                  fontSize: "0.875rem",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" onClick={applySuggestedBody} className="admin-btn">
                 提案を本文に反映
               </button>
             </>
           )}
         </div>
-        {error && <p style={{ color: "#c00" }}>{error}</p>}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              padding: "8px 16px",
-              border: "1px solid #333",
-              borderRadius: 4,
-              background: "#333",
-              color: "#fff",
-              cursor: submitting ? "not-allowed" : "pointer",
-            }}
-          >
+        {error && <p className="admin-error">{error}</p>}
+        <div className="admin-form-actions">
+          <button type="submit" disabled={submitting} className="admin-btn">
             {submitting ? "保存中…" : "保存"}
           </button>
           <button
             type="button"
             onClick={() => handlePublish(getUnpublishFlagForPublishButton(isPublished))}
             disabled={submitting}
-            style={{
-              padding: "8px 16px",
-              border: "1px solid #333",
-              borderRadius: 4,
-              background: "transparent",
-              cursor: submitting ? "not-allowed" : "pointer",
-            }}
+            className="admin-btn admin-btn-secondary"
           >
             {isPublished ? "下書きに戻す" : "公開する"}
           </button>
@@ -442,23 +375,16 @@ function EditPostForm() {
             type="button"
             onClick={handleDelete}
             disabled={submitting}
-            style={{
-              padding: "8px 16px",
-              border: "1px solid #c00",
-              borderRadius: 4,
-              background: "transparent",
-              color: "#c00",
-              cursor: submitting ? "not-allowed" : "pointer",
-            }}
+            className="admin-btn admin-btn-danger"
           >
             削除
           </button>
           {isPublished && (
-            <Link href={`/posts/${encodeURIComponent(post.slug)}`} style={{ padding: "8px 16px", color: "#666" }}>
+            <Link href={`/posts/${encodeURIComponent(post.slug)}`} className="admin-btn admin-btn-secondary">
               表示
             </Link>
           )}
-          <Link href="/admin/posts" style={{ padding: "8px 16px", color: "#666" }}>
+          <Link href="/admin/posts" className="admin-btn admin-btn-secondary">
             一覧へ
           </Link>
         </div>

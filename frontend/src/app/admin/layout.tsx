@@ -15,12 +15,10 @@ export default function AdminLayout({
 }) {
   return (
     <AdminProvider>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
-        <header style={{ marginBottom: 24, borderBottom: "1px solid #eee", paddingBottom: 16 }}>
-          <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-            <Link href="/admin" style={{ color: "inherit", textDecoration: "none" }}>
-              管理
-            </Link>
+      <div className="admin-container">
+        <header className="admin-header">
+          <h1>
+            <Link href="/admin">管理</Link>
           </h1>
           <AdminGate fallback={null} showNavWhenReady>
             <AdminNav />
