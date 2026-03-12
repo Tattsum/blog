@@ -15,6 +15,7 @@ skills/
 ├── README.md
 ├── Makefile
 └── src/
+    ├── blog-commit-push/SKILL.md
     ├── blog-handover/SKILL.md
     ├── blog-lint-and-test/SKILL.md
     └── blog-security-performance/SKILL.md
@@ -24,6 +25,7 @@ skills/
 
 ```text
 .cursor/skills/
+├── blog-commit-push/SKILL.md
 ├── blog-handover/SKILL.md
 ├── blog-lint-and-test/SKILL.md
 └── blog-security-performance/SKILL.md
