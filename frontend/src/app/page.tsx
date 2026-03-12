@@ -45,7 +45,7 @@ export default async function HomePage() {
                 {post.thumbnailUrl && (
                   <Link
                     href={`/posts/${encodeURIComponent(post.slug)}`}
-                    style={{ display: "block", marginBottom: 8 }}
+                    className="card-thumbnail"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -53,7 +53,6 @@ export default async function HomePage() {
                       alt=""
                       width={640}
                       height={360}
-                      style={{ width: "100%", maxWidth: 640, height: "auto", borderRadius: 4, objectFit: "cover" }}
                       loading="lazy"
                       decoding="async"
                     />

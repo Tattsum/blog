@@ -112,3 +112,4 @@ Zenn（[zenn.dev](https://zenn.dev)）のような読みやすく整った見た
 ## 7. 変更履歴
 
 - 2026-03-12: 初版（Zenn 風 UI 要件、スマートデバイス対応、レスポンシブ方針、実装優先順序）。
+- 2026-03-12: 実装反映。グローバル・コンテナ（ブレークポイント別パディング）、ヘッダー（.site-header / .site-nav、モバイル縦積み・タッチ 44px）、記事一覧（.card-thumbnail）、記事詳細（.article-page / .article-hero / .article-title / .article-meta）、post-body 見出し・段落・リスト・画像のスタイルを適用。

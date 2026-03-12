@@ -46,7 +46,7 @@ export default async function TagPostsPage({ params }: Props) {
               {post.thumbnailUrl && (
                 <Link
                   href={`/posts/${post.slug}`}
-                  style={{ display: "block", marginBottom: 8 }}
+                  className="card-thumbnail"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -54,7 +54,6 @@ export default async function TagPostsPage({ params }: Props) {
                     alt=""
                     width={640}
                     height={360}
-                    style={{ width: "100%", maxWidth: 640, height: "auto", borderRadius: 4, objectFit: "cover" }}
                     loading="lazy"
                     decoding="async"
                   />

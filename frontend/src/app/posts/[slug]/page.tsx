@@ -47,49 +47,36 @@ export default async function PostPage({ params }: Props) {
   if (notFoundErr) notFound();
 
   return (
-    <div className="container">
+    <div className="container article-page">
       <Header />
 
       <article>
         {thumbnailUrl && (
-          <div style={{ marginBottom: 24 }}>
+          <div className="article-hero">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={thumbnailUrl}
               alt=""
               width={800}
               height={450}
-              style={{ width: "100%", maxWidth: 800, height: "auto", borderRadius: 4, objectFit: "cover" }}
               decoding="async"
             />
           </div>
         )}
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 8 }}>
-          {title}
-        </h1>
+        <h1 className="article-title">{title}</h1>
         {publishedAt && (
-          <time
-            dateTime={publishedAt}
-            style={{
-              display: "block",
-              marginBottom: 24,
-              fontSize: "0.875rem",
-              color: "var(--muted)",
-            }}
-          >
+          <time dateTime={publishedAt} className="article-meta">
             {formatDate(publishedAt)}
           </time>
         )}
-        <div className="post-body" style={{ lineHeight: 1.8, fontSize: "1rem" }}>
+        <div className="post-body">
           <MarkdownBody>{bodyMarkdown}</MarkdownBody>
         </div>
       </article>
 
-      <p style={{ marginTop: 32 }}>
-        <Link href="/" style={{ color: "var(--muted)" }}>
-          ← 一覧に戻る
-        </Link>
-      </p>
+      <Link href="/" className="back-link">
+        ← 一覧に戻る
+      </Link>
     </div>
   );
 }
