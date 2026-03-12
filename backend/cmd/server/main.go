@@ -137,6 +137,23 @@ func main() {
 					slog.Info("media storage", "provider", "gcs", "bucket", bucket)
 				}
 			}
+		case "r2":
+			accountID := strings.TrimSpace(os.Getenv("R2_ACCOUNT_ID"))
+			accessKeyID := strings.TrimSpace(os.Getenv("R2_ACCESS_KEY_ID"))
+			secretAccessKey := strings.TrimSpace(os.Getenv("R2_SECRET_ACCESS_KEY"))
+			bucket := strings.TrimSpace(os.Getenv("R2_BUCKET"))
+			publicBaseURL := strings.TrimSpace(os.Getenv("R2_PUBLIC_BASE_URL"))
+			if accountID == "" || accessKeyID == "" || secretAccessKey == "" || bucket == "" || publicBaseURL == "" {
+				slog.Warn("R2 env not set (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL); upload disabled")
+			} else {
+				r2, err := media.NewR2Storage(ctxBg, accountID, accessKeyID, secretAccessKey, bucket, publicBaseURL)
+				if err != nil {
+					slog.Warn("R2 storage disabled", "err", err)
+				} else {
+					mediaStorage = r2
+					slog.Info("media storage", "provider", "r2", "bucket", bucket)
+				}
+			}
 		default:
 			uploadDir := envOrDefault("UPLOAD_DIR", "uploads")
 			baseURL := os.Getenv("BASE_URL")

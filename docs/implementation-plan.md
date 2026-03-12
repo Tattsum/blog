@@ -139,7 +139,9 @@
   - 見栄えを Zenn に近づけ、スマートデバイス（スマートフォン・タブレット）で閲覧・操作しやすくする。タイポグラフィ・余白・コンポーネントの統一と、ブレークポイント・タッチターゲット・ヘッダー／一覧のレスポンシブ対応。詳細と実装優先順序は [ui-responsive-design.md](ui-responsive-design.md) を参照。
 - **サムネイル・本文メディア・アップローダー**
   - 記事サムネイル URL、本文画像・動画のホスティング、管理画面からのアップロード機能。詳細は [post-thumbnail-and-media.md](post-thumbnail-and-media.md) を参照。
-  - **実装済み（Phase 1・2・3）**: DB に `thumbnail_url`、Proto/API/管理画面・一覧・詳細でサムネイル表示。`POST /upload` で管理者認証必須の multipart アップロード、ローカルまたは GCS ストレージ、管理画面で「ファイルを選択してアップロード」（サムネイル）と「画像・動画をアップロードして挿入」（本文 Markdown）。環境変数: ローカルは `UPLOAD_DIR`（任意で `BASE_URL`）、GCS は `MEDIA_STORAGE=gcs` と `GCS_MEDIA_BUCKET`。R2 は未実装（同一 `MediaStorage` インターフェースで追加可能）。**Phase 3**: 記事詳細の本文で YouTube / Vimeo の埋め込み許可 URL を iframe 表示（`MarkdownBody`・`embed-url.ts`）。
+  - **実装済み（Phase 1・2・3）**: DB に `thumbnail_url`、Proto/API/管理画面・一覧・詳細でサムネイル表示。`POST /upload` で管理者認証必須の multipart アップロード、ローカル・GCS・R2 ストレージ、管理画面で「ファイルを選択してアップロード」（サムネイル）と「画像・動画をアップロードして挿入」（本文 Markdown）。環境変数: ローカルは `UPLOAD_DIR`（任意で `BASE_URL`）、GCS は `MEDIA_STORAGE=gcs` と `GCS_MEDIA_BUCKET`、R2 は `MEDIA_STORAGE=r2` と R2 用環境変数。**Phase 3**: 記事詳細の本文で YouTube / Vimeo の埋め込み許可 URL を iframe 表示（`MarkdownBody`・`embed-url.ts`）。
+- **メディアファインダー（将来）**
+  - アップロード済み画像の一覧・選択・再利用。詳細は [media-finder.md](media-finder.md)。
 - **Google アカウントでの管理者ログイン**
   - 管理画面で「Google でログイン」を選べるようにする。OAuth 2.0 / OpenID Connect で Google の ID トークンを取得し、バックエンドで検証したうえで既存のセッション発行フローと統合。許可する Google アカウント（メール）を設定で絞る運用を想定。
 - **コメント・いいね機能**

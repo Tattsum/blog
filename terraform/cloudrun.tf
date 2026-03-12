@@ -62,6 +62,66 @@ resource "google_cloud_run_v2_service" "blog_api" {
         value = var.cors_allowed_origins
       }
 
+      # メディアストレージ: GCS（media_storage=gcs かつ gcs_media_bucket 設定時）
+      dynamic "env" {
+        for_each = var.media_storage == "gcs" && var.gcs_media_bucket != null && var.gcs_media_bucket != "" ? [1] : []
+        content {
+          name  = "MEDIA_STORAGE"
+          value = "gcs"
+        }
+      }
+      dynamic "env" {
+        for_each = var.media_storage == "gcs" && var.gcs_media_bucket != null && var.gcs_media_bucket != "" ? [1] : []
+        content {
+          name  = "GCS_MEDIA_BUCKET"
+          value = var.gcs_media_bucket
+        }
+      }
+
+      # メディアストレージ: R2（media_storage=r2 かつ R2 用変数がすべて設定されているとき）
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "MEDIA_STORAGE"
+          value = "r2"
+        }
+      }
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "R2_ACCOUNT_ID"
+          value = var.r2_account_id
+        }
+      }
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "R2_ACCESS_KEY_ID"
+          value = var.r2_access_key_id
+        }
+      }
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "R2_SECRET_ACCESS_KEY"
+          value = var.r2_secret_access_key
+        }
+      }
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "R2_BUCKET"
+          value = var.r2_bucket
+        }
+      }
+      dynamic "env" {
+        for_each = local.use_r2 ? [1] : []
+        content {
+          name  = "R2_PUBLIC_BASE_URL"
+          value = var.r2_public_base_url
+        }
+      }
+
       resources {
         limits = {
           cpu    = "1"

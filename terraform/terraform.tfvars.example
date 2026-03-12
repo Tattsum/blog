@@ -22,3 +22,16 @@ admin_api_key = "your-secure-admin-api-key"
 #      docker push ...
 # イメージ名 blog-api は Artifact Registry のリポジトリ名。Cloud Run サービス名とは別。
 cloud_run_image = "asia-northeast1-docker.pkg.dev/your-gcp-project-id/blog-repo/blog-api:latest"
+
+# --- メディアストレージ（省略時はローカル＝Cloud Run では非永続。本番では gcs または r2 を推奨）---
+# docs/setup-deploy-checklist.md の「6.6 メディアアップロードを GCS または R2 で永続化する」を参照。
+# media_storage = "gcs"
+# gcs_media_bucket = "blog-media"   # 事前にバケット作成・公開読取設定が必要
+
+# R2 を使う場合（機密は tfvars に記載せず CI の Secret 等で渡す運用も可）
+# media_storage = "r2"
+# r2_account_id = "your-cloudflare-account-id"
+# r2_access_key_id = "your-r2-access-key-id"
+# r2_secret_access_key = "your-r2-secret-access-key"
+# r2_bucket = "blog-media"
+# r2_public_base_url = "https://pub-xxxx.r2.dev"

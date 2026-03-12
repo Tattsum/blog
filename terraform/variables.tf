@@ -53,3 +53,50 @@ variable "cors_allowed_origins" {
   default     = "https://tattsum.com,http://localhost:3000"
   description = "CORS で許可するオリジン（カンマ区切り。フロントのオリジン）"
 }
+
+# --- メディアストレージ（アップロード先）---
+# 未設定の場合はバックエンドのデフォルト（ローカル＝Cloud Run 上では非永続）。本番では gcs または r2 を推奨。
+variable "media_storage" {
+  type        = string
+  default     = ""
+  description = "メディアストレージ種別: gcs / r2 / 空（ローカル）。gcs の場合は gcs_media_bucket を、r2 の場合は r2_* 変数を設定する"
+}
+
+variable "gcs_media_bucket" {
+  type        = string
+  default     = null
+  description = "GCS メディア用バケット名（media_storage=gcs のとき必須）。バケットは手動または別リソースで作成すること"
+}
+
+# R2 用（media_storage=r2 のとき必須）。r2_secret_access_key は機密のため tfvars を .gitignore に含めること
+variable "r2_account_id" {
+  type        = string
+  default     = null
+  description = "Cloudflare R2: アカウント ID（media_storage=r2 のとき必須）"
+}
+
+variable "r2_access_key_id" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "Cloudflare R2: API トークン Access Key ID（media_storage=r2 のとき必須）"
+}
+
+variable "r2_secret_access_key" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "Cloudflare R2: API トークン Secret Access Key（media_storage=r2 のとき必須）"
+}
+
+variable "r2_bucket" {
+  type        = string
+  default     = null
+  description = "Cloudflare R2: バケット名（media_storage=r2 のとき必須）"
+}
+
+variable "r2_public_base_url" {
+  type        = string
+  default     = null
+  description = "Cloudflare R2: 公開 URL ベース（例: https://pub-xxxx.r2.dev）。末尾スラッシュなし（media_storage=r2 のとき必須）"
+}

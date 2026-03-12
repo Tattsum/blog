@@ -100,7 +100,7 @@
 ### 5.2 バックエンド
 
 - **アップロード API**: 管理者認証（X-Admin-Key または Bearer セッション）必須。Multipart でファイルを受信するか、Presigned URL（S3/R2 互換）を発行してフロントから直接ストレージにアップロードする方式のいずれかを採用する。詳細は実装時に決める。
-- **ストレージ**: [4. メディアのホスティング](#4-メディアのホスティング) に従い、**Cloudflare R2** を推奨。Go からは S3 互換 API（AWS SDK 等）でアップロードする。GCS を選ぶ場合は Go の GCS クライアントでアップロードする。
+- **ストレージ**: [4. メディアのホスティング](#4-メディアのホスティング) に従い、**Cloudflare R2** を推奨。**R2 実装済み**（`MEDIA_STORAGE=r2` 時）。環境変数は [5.5 本番環境（Cloud Run 等）での注意](#55-本番環境cloud-run-等での注意) を参照。GCS を選ぶ場合は Go の GCS クライアントでアップロードする（`MEDIA_STORAGE=gcs`）。
 - **レスポンス**: アップロード成功後、**公開 URL**（サムネイル・本文でそのまま参照できる URL）を返す。R2 の場合はパブリックアクセス用バケットまたはカスタムドメインの URL を返す。
 
 ### 5.3 フロント（管理画面）
@@ -116,6 +116,14 @@
 - **ファイルサイズ**: 上限を設ける（例: 画像 10MB、動画 100MB）。詳細は実装時に決める。
 - **ストレージの公開範囲**: アップロードしたオブジェクトは読者が参照するため、バケットの読み取りは公開（または署名付き URL で配信する方式）とする。書き込みはバックエンドのみに限定する。
 
+### 5.5 本番環境（Cloud Run 等）での注意
+
+- **ローカルストレージ（`UPLOAD_DIR`）はコンテナ内の一時ディスクに保存される**ため、Cloud Run のインスタンス再起動・スケールダウン・再デプロイで **ファイルが消えます**。その結果、`https://<backend>/uploads/xxx.png` のような URL は 404 になり、画像が壊れて表示されます。
+- **本番では GCS または R2 を使うこと**:
+  - **GCS**: 環境変数 `MEDIA_STORAGE=gcs` と `GCS_MEDIA_BUCKET=<バケット名>` を設定。URL は `https://storage.googleapis.com/<bucket>/<key>` となり永続します。GCS バケットの公開読取設定と、Cloud Run のサービスアカウントにストレージ書込権限を付与する必要があります（[setup-deploy-checklist.md](setup-deploy-checklist.md) 等を参照）。
+  - **R2**: 環境変数 `MEDIA_STORAGE=r2` と `R2_ACCOUNT_ID`・`R2_ACCESS_KEY_ID`・`R2_SECRET_ACCESS_KEY`・`R2_BUCKET`・`R2_PUBLIC_BASE_URL` を設定。`R2_PUBLIC_BASE_URL` は r2.dev の Public development URL（例: `https://pub-xxxx.r2.dev`）またはカスタムドメイン（例: `https://media.example.com`）を指定。手順は [setup-deploy-checklist.md](setup-deploy-checklist.md) の「6.6 メディアアップロードを GCS または R2 で永続化する」を参照。
+- 既に壊れた画像（DB に保存された `thumbnail_url` がバックエンドの `/uploads/` を指している場合）は、管理画面で該当記事を編集し、サムネイルを再アップロードして GCS/R2 の URL に差し替えるか、サムネイル欄を空にして保存してください。
+
 ---
 
 ## 6. 関連ドキュメント
@@ -123,6 +131,7 @@
 - [API 仕様](api-specification.md) — Post のフィールド追加時に更新する。
 - [フロントエンドデザイン方針](frontend-design.md) — 一覧・詳細のレイアウトや `.post-body` のスタイル。
 - [実装プラン](implementation-plan.md) — 本機能をフェーズとして追記する場合の参照。実装時には実装プランに本機能のフェーズ（サムネイル URL・アップローダー・動画埋め込み）を追記する。
+- [メディアファインダー](media-finder.md) — アップロード済み画像の一覧・選択・再利用（将来拡張）の設計。
 
 ---
 
@@ -141,6 +150,7 @@
   - 記事詳細（`/posts/[slug]`）で本文 Markdown を `MarkdownBody` コンポーネントでレンダリング。リンクの `href` が埋め込み許可 URL のとき iframe で表示。
   - 許可 URL（ホワイトリスト）: `https://www.youtube.com/embed/*`、`https://youtube.com/embed/*`、`https://www.youtube.com/watch?v=*`（embed に変換）、`https://player.vimeo.com/video/*`。それ以外のリンクは従来どおり `<a>` で新しいタブ表示。
   - 実装: `frontend/src/lib/embed-url.ts`（URL 判定）、`frontend/src/components/MarkdownBody.tsx`（react-markdown の `a` / `img` カスタムコンポーネント）。画像は `loading="lazy"` と `decoding="async"` を付与。
+- 今後の拡張として、アップロード済み画像の一覧・選択・再利用（メディアファインダー）を [media-finder.md](media-finder.md) に記載する。
 
 ---
 
@@ -152,3 +162,5 @@
 - 2026-03-12: 全体レビュー反映（認証表記を Bearer セッションに統一、API に SearchPosts / PublishPost を明記、実装プランとの相互参照を追加）。
 - 2026-03-12: 実装状況を追記（Phase 1・Phase 2 完了内容と Phase 3 未着手）。
 - 2026-03-12: Phase 3 完了（動画埋め込み）。MarkdownBody で YouTube / Vimeo の許可 URL を iframe 表示、実装状況を更新。
+- 2026-03-12: 5.5 追加。本番（Cloud Run）でローカルストレージが非永続であることと、GCS 利用・壊れた画像の対処を記載。
+- 2026-03-12: R2 実装に合わせて 5.2・5.5 を更新（本番では GCS または R2、R2 用環境変数）。6 に media-finder.md への参照、7 にメディアファインダー拡張の記載を追加。

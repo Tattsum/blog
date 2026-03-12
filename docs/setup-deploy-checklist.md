@@ -513,6 +513,55 @@ Gemini の代わりに **Partner モデル（Claude）** を使う場合:
 - 任意で **`VERTEX_CLAUDE_MODEL`**（例: SDK 定数に合わせ `claude-sonnet-4-5-20250929`）。未設定時はコード側デフォルトを使用。リージョンによって Model Garden で利用可否が異なる。
 - 実装は `anthropic-sdk-go` の Vertex オプション（ADC）。本番では Claude が有効なリージョンを選ぶこと。
 
+### 6.6 メディアアップロードを GCS または R2 で永続化する（推奨）
+
+管理画面からアップロードしたサムネイル・本文画像の URL が **`https://<Cloud Run URL>/uploads/xxx`** の場合、**Cloud Run のコンテナはエフェメラル**なため、再起動・再デプロイでファイルが消え、画像が 404 になります。本番では **GCS または R2 に保存**してください。
+
+#### GCS を選ぶ場合
+
+- **GCS バケットを作成**（例: `blog-media`）:
+
+  ```bash
+  gcloud storage buckets create gs://blog-media --location=asia-northeast1
+  ```
+
+- **バケットを公開読取にする**（記事・サムネイルを読者が参照するため）:
+  - [Making data public](https://cloud.google.com/storage/docs/access-control/making-data-public) に従い、Uniform bucket-level access で `allUsers` に `roles/storage.objectViewer` を付与するか、オブジェクトごとに ACL を設定する。
+  - コンソール: バケット → 権限 → プリンシパルに `allUsers`、ロールに「ストレージ オブジェクトの閲覧者」を追加。
+- **Cloud Run の実行サービスアカウントに書込権限を付与**:
+
+  ```bash
+  gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
+    --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --role="roles/storage.objectCreator"
+  ```
+
+  - バケット単位で付与する場合は、バケットの IAM で上記 SA に「ストレージ オブジェクト作成者」を付与。
+- **Cloud Run に環境変数を追加**:
+  - `MEDIA_STORAGE=gcs`
+  - `GCS_MEDIA_BUCKET=blog-media`（作成したバケット名）
+  - **Terraform で Cloud Run を管理している場合**: [terraform/README.md](../terraform/README.md) を参照し、`terraform.tfvars` に `media_storage = "gcs"` と `gcs_media_bucket = "blog-media"` を設定して `terraform apply` する。
+- 再デプロイ後、管理画面からアップロードすると URL は `https://storage.googleapis.com/blog-media/xxx` となり永続します。
+
+#### R2 を選ぶ場合
+
+- **Cloudflare ダッシュボード**で [R2](https://dash.cloudflare.com/?to=/:account/r2) を開き、**Create bucket** でバケットを作成（例: `blog-media`）。
+- **R2 API トークン**を発行: **R2** → **Manage R2 API Tokens** → **Create API token**。権限は「Object Read & Write」、バケットは作成したバケットに限定可能。発行後に **Access Key ID** と **Secret Access Key** を控える。
+- **パブリックアクセス**のいずれかを設定:
+  - **r2.dev サブドメイン**: バケット設定で「Public development URL」を有効にすると Cloudflare が URL（例: `https://pub-xxxx.r2.dev`）を発行。開発・小規模向け。
+  - **カスタムドメイン**: 同一 Cloudflare アカウント内のゾーンをバケットに接続（例: `https://media.example.com`）。本番推奨。
+- **Cloud Run に環境変数を追加**:
+  - `MEDIA_STORAGE=r2`
+  - `R2_ACCOUNT_ID`（Cloudflare アカウント ID。ダッシュボードの URL や Overview で確認）
+  - `R2_ACCESS_KEY_ID`（上記 API トークンの Access Key ID）
+  - `R2_SECRET_ACCESS_KEY`（上記 API トークンの Secret Access Key）
+  - `R2_BUCKET`（バケット名、例: `blog-media`）
+  - `R2_PUBLIC_BASE_URL`（公開 URL のベース。r2.dev の場合は「Public development URL」の値、カスタムドメインの場合はその URL。末尾スラッシュなし）
+  - **Terraform で Cloud Run を管理している場合**: `terraform.tfvars` に `media_storage = "r2"` と R2 用変数（`r2_account_id`, `r2_access_key_id`, `r2_secret_access_key`, `r2_bucket`, `r2_public_base_url`）を設定して `terraform apply` する。例は [terraform/terraform.tfvars.example](../terraform/terraform.tfvars.example) を参照。
+- 再デプロイ後、管理画面からアップロードすると、設定した公開 URL ベース + オブジェクトキーで永続します。
+
+既に壊れた画像は、該当記事を編集してサムネイルを再アップロードするか、サムネイル欄を空にして保存してください。詳細は [post-thumbnail-and-media.md](post-thumbnail-and-media.md) の「5.5 本番環境（Cloud Run 等）での注意」を参照。
+
 ---
 
 ## 7. Cloudflare Pages の設定（手動）

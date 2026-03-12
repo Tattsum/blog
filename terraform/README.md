@@ -74,7 +74,10 @@ migrate -path backend/db/migrations \
 | --- | --- |
 | Cloud SQL (MySQL 8.0) | インスタンス `blog-mysql` + データベース `blog` |
 | Secret Manager | `DATABASE_DSN`（Unix ソケット用 DSN）、`ADMIN_API_KEY` |
-| Cloud Run v2 | サービス名は `cloud_run_service_name`（既定 `blog-backend`）。シークレット・Cloud SQL 接続付き |
+| Cloud Run v2 | サービス名は `cloud_run_service_name`（既定 `blog-backend`）。シークレット・Cloud SQL 接続・メディアストレージ用 env 付き |
+| GCS IAM（オプション） | `media_storage=gcs` かつ `gcs_media_bucket` 設定時、当該バケットに Cloud Run 実行 SA の `objectCreator` を付与 |
+
+メディアストレージ（`media_storage`）を `gcs` または `r2` にすると、アップロード先が永続ストレージになり、Cloud Run 再起動後も画像が消えません。手順は [setup-deploy-checklist.md](../docs/setup-deploy-checklist.md) の「6.6 メディアアップロードを GCS または R2 で永続化する」を参照してください。
 
 ## 注意
 
