@@ -53,7 +53,7 @@ resource "google_cloud_run_v2_service" "blog_api" {
       }
       env {
         name  = "GOOGLE_CLOUD_LOCATION"
-        value = var.region
+        value = "us-central1"
       }
 
       # CORS: ブラウザから別オリジン（tattsum.com 等）で API を呼ぶために必要
