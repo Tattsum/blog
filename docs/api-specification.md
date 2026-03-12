@@ -248,6 +248,16 @@ service PostService {
 
 ---
 
+### メディアアップロード（POST /upload）
+
+- **概要**: 管理者認証必須の multipart アップロード。画像・動画をストレージに保存し、公開 URL を JSON で返す。サムネイルや本文 Markdown 用の URL 取得に利用する。
+- **認証**: `X-Admin-Key` ヘッダー、または `Authorization: Bearer <session_token>` のいずれか。
+- **リクエスト**: `Content-Type: multipart/form-data`。フィールド名 `file` で 1 ファイルを送信。
+- **許可形式**: 画像（JPEG / PNG / GIF / WebP）、動画（MP4 / WebM）。画像は最大 10MB、動画は最大 100MB。
+- **レスポンス**: 成功時 `200`、JSON `{"url": "https://..."}`。失敗時は `4xx` / `5xx` で JSON `{"error": "メッセージ"}`。
+
+---
+
 ### TagService
 
 #### ListTags

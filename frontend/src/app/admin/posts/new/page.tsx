@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAdmin } from "../../AdminProvider";
 import { AdminGate } from "../../AdminGate";
+import { uploadMedia } from "@/lib/admin-api";
 
 export default function NewPostPage() {
   return (
@@ -25,8 +26,57 @@ function NewPostForm() {
   const [tagIds, setTagIds] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingThumb, setUploadingThumb] = useState(false);
+  const [uploadThumbError, setUploadThumbError] = useState("");
+  const thumbInputRef = useRef<HTMLInputElement>(null);
+  const bodyInputRef = useRef<HTMLTextAreaElement>(null);
 
   const client = admin?.postClient;
+
+  async function handleThumbUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !admin) return;
+    e.target.value = "";
+    setUploadThumbError("");
+    setUploadingThumb(true);
+    try {
+      const { url } = await uploadMedia(file, {
+        adminKey: admin.adminKey || undefined,
+        sessionToken: admin.sessionToken || undefined,
+      });
+      setThumbnailUrl(url);
+    } catch (err) {
+      setUploadThumbError(err instanceof Error ? err.message : "アップロードに失敗しました");
+    } finally {
+      setUploadingThumb(false);
+    }
+  }
+
+  async function handleBodyImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !admin) return;
+    e.target.value = "";
+    setError("");
+    try {
+      const { url } = await uploadMedia(file, {
+        adminKey: admin.adminKey || undefined,
+        sessionToken: admin.sessionToken || undefined,
+      });
+      const insert = `![画像](${url})`;
+      const ta = bodyInputRef.current;
+      if (ta) {
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        const before = bodyMarkdown.slice(0, start);
+        const after = bodyMarkdown.slice(end);
+        setBodyMarkdown(before + insert + after);
+      } else {
+        setBodyMarkdown((prev) => prev + insert);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "画像のアップロードに失敗しました");
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,11 +137,35 @@ function NewPostForm() {
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>本文（Markdown）</label>
           <textarea
+            ref={bodyInputRef}
             value={bodyMarkdown}
             onChange={(e) => setBodyMarkdown(e.target.value)}
             rows={12}
             style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4, fontFamily: "monospace" }}
           />
+          <div style={{ marginTop: 8 }}>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm"
+              style={{ display: "none" }}
+              id="body-image-upload-new"
+              onChange={handleBodyImageUpload}
+            />
+            <label
+              htmlFor="body-image-upload-new"
+              style={{
+                display: "inline-block",
+                padding: "6px 12px",
+                border: "1px solid #333",
+                borderRadius: 4,
+                background: "transparent",
+                cursor: "pointer",
+                fontSize: "0.875rem",
+              }}
+            >
+              画像・動画をアップロードして挿入
+            </label>
+          </div>
         </div>
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>要約</label>
@@ -104,13 +178,38 @@ function NewPostForm() {
         </div>
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>サムネイル URL（任意）</label>
-          <input
-            type="url"
-            value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-            placeholder="https://..."
-            style={{ width: "100%", padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
-          />
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
+              placeholder="https://..."
+              style={{ flex: 1, minWidth: 200, padding: "8px 12px", border: "1px solid #ccc", borderRadius: 4 }}
+            />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              ref={thumbInputRef}
+              style={{ display: "none" }}
+              onChange={handleThumbUpload}
+            />
+            <button
+              type="button"
+              disabled={uploadingThumb}
+              onClick={() => thumbInputRef.current?.click()}
+              style={{
+                padding: "8px 12px",
+                border: "1px solid #333",
+                borderRadius: 4,
+                background: "transparent",
+                cursor: uploadingThumb ? "not-allowed" : "pointer",
+                fontSize: "0.875rem",
+              }}
+            >
+              {uploadingThumb ? "アップロード中…" : "ファイルを選択してアップロード"}
+            </button>
+          </div>
+          {uploadThumbError && <p style={{ color: "#c00", fontSize: "0.875rem", marginTop: 4 }}>{uploadThumbError}</p>}
         </div>
         <div>
           <label style={{ display: "block", marginBottom: 4, fontWeight: 500 }}>タグ ID（カンマ区切り）</label>

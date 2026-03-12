@@ -12,9 +12,12 @@ import (
 
 	connectcors "connectrpc.com/cors"
 	appai "github.com/Tattsum/blog/backend/internal/application/ai"
+	uploadapp "github.com/Tattsum/blog/backend/internal/application/upload"
+	"github.com/Tattsum/blog/backend/internal/infrastructure/media"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/mysql"
 	"github.com/Tattsum/blog/backend/internal/infrastructure/vertexai"
 	"github.com/Tattsum/blog/backend/internal/interface/rpc"
+	uploadhandler "github.com/Tattsum/blog/backend/internal/interface/upload"
 	blogv1connect "github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
 	"github.com/rs/cors"
 )
@@ -42,7 +45,7 @@ func main() {
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   connectcors.AllowedMethods(),
-		AllowedHeaders:   append(connectcors.AllowedHeaders(), "Authorization"),
+		AllowedHeaders:   append(connectcors.AllowedHeaders(), "Authorization", "X-Admin-Key"),
 		ExposedHeaders:   connectcors.ExposedHeaders(),
 		MaxAge:           7200,
 		AllowCredentials: true,
@@ -116,6 +119,40 @@ func main() {
 		mux.Handle(aiPath, aiHandler)
 		mux.Handle(authPath, authHandler)
 		slog.Info("rpc handlers registered")
+
+		// メディアアップロード: MEDIA_STORAGE=gcs のとき GCS、それ以外はローカル
+		var mediaStorage uploadapp.MediaStorage
+		switch strings.ToLower(strings.TrimSpace(os.Getenv("MEDIA_STORAGE"))) {
+		case "gcs":
+			bucket := strings.TrimSpace(os.Getenv("GCS_MEDIA_BUCKET"))
+			if bucket == "" {
+				slog.Warn("GCS_MEDIA_BUCKET not set; upload disabled")
+			} else {
+				gcs, err := media.NewGCSStorage(ctxBg, bucket)
+				if err != nil {
+					slog.Warn("GCS storage disabled", "err", err)
+				} else {
+					defer func() { _ = gcs.Close() }()
+					mediaStorage = gcs
+					slog.Info("media storage", "provider", "gcs", "bucket", bucket)
+				}
+			}
+		default:
+			uploadDir := envOrDefault("UPLOAD_DIR", "uploads")
+			baseURL := os.Getenv("BASE_URL")
+			local, err := media.NewLocalStorage(uploadDir, baseURL)
+			if err != nil {
+				slog.Warn("local media storage disabled", "err", err)
+			} else {
+				mediaStorage = local
+				mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(local.Dir()))))
+				slog.Info("media storage", "provider", "local", "dir", uploadDir)
+			}
+		}
+		if mediaStorage != nil {
+			mux.Handle("/upload", uploadhandler.NewHandler(mediaStorage, adminKey, sessionStore))
+			slog.Info("upload handler registered at /upload")
+		}
 	} else {
 		slog.Warn("DATABASE_DSN not set; RPC handlers not registered")
 	}

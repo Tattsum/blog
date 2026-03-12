@@ -68,3 +68,39 @@ export function createAdminClients(adminKey: string) {
     aiClient: createClient(AIService, transport),
   };
 }
+
+/** アップロード API のベース URL（管理画面の fetch 用） */
+export function getUploadBaseUrl(): string {
+  return baseUrl;
+}
+
+/** メディアアップロード。認証は adminKey または sessionToken のいずれかを渡す。 */
+export async function uploadMedia(
+  file: File,
+  auth: { adminKey?: string; sessionToken?: string }
+): Promise<{ url: string }> {
+  const headers: Record<string, string> = {};
+  if (auth.adminKey) {
+    headers["X-Admin-Key"] = auth.adminKey;
+  } else if (auth.sessionToken) {
+    headers["Authorization"] = `Bearer ${auth.sessionToken}`;
+  } else {
+    throw new Error("認証が必要です（管理者キーまたはログイン）");
+  }
+  const form = new FormData();
+  form.append("file", file);
+  const res = await edgeSafeFetch(`${baseUrl}/upload`, {
+    method: "POST",
+    headers,
+    body: form,
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = (body as { error?: string }).error ?? res.statusText;
+    throw new Error(msg);
+  }
+  const data = (await res.json()) as { url?: string };
+  if (!data?.url) throw new Error("アップロード応答に URL が含まれていません");
+  return { url: data.url };
+}
