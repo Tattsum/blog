@@ -23,8 +23,7 @@ dist/
 
 # IDE
 .idea/
-# Cursor: skills の生成先（正本は skills/src。make -C skills install で作成）
-.cursor/skills/
+# Cursor: 正本は skills/src。make -C skills install で .cursor/skills/ に展開。.cursor/skills/ はリポジトリにコミットし Cursor が読み込む。
 
 *.swp
 *.swo
