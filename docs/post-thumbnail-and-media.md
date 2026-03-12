@@ -126,9 +126,29 @@
 
 ---
 
-## 7. 変更履歴
+## 7. 実装状況
+
+- **Phase 1（完了）**: サムネイル URL の追加
+  - DB: `posts.thumbnail_url VARCHAR(1024) NULL`（migration `000002_add_thumbnail_url_to_posts`）
+  - Proto: `Post.thumbnail_url = 11`, `CreatePostRequest.thumbnail_url = 6`, `UpdatePostRequest.optional thumbnail_url = 7`
+  - バックエンド: ドメイン・converter・validation・repository・PostServer で Create/Update/Get/List/Search 対応。URL 検証（http/https・最大 1024 文字）
+  - フロント: 管理画面の新規・編集にサムネイル URL 入力欄。一覧・詳細・検索・タグ別一覧で `thumbnail_url` があれば表示。管理一覧で 48x48 サムネイル表示
+- **Phase 2（完了）**: アップローダー
+  - バックエンド: `POST /upload`（multipart `file`）。管理者認証（X-Admin-Key または Bearer セッション）必須。`MediaStorage` 抽象化、ローカル（`UPLOAD_DIR`・任意で `BASE_URL`）と GCS（`MEDIA_STORAGE=gcs`・`GCS_MEDIA_BUCKET`）実装。MIME・拡張子・サイズ検証（画像 10MB・動画 100MB）。成功時 `{"url": "..."}` を返す。ローカル時は `/uploads/` を静的配信
+  - フロント: 管理画面の記事新規・編集で「ファイルを選択してアップロード」（サムネイル用）と「画像・動画をアップロードして挿入」（本文用。`![画像](url)` をカーソル位置に挿入）。`uploadMedia()`（admin-api.ts）で X-Admin-Key または Bearer を付与して送信
+  - 詳細: [api-specification.md](api-specification.md) の「メディアアップロード（POST /upload）」
+- **Phase 3（完了）**: 動画埋め込み
+  - 記事詳細（`/posts/[slug]`）で本文 Markdown を `MarkdownBody` コンポーネントでレンダリング。リンクの `href` が埋め込み許可 URL のとき iframe で表示。
+  - 許可 URL（ホワイトリスト）: `https://www.youtube.com/embed/*`、`https://youtube.com/embed/*`、`https://www.youtube.com/watch?v=*`（embed に変換）、`https://player.vimeo.com/video/*`。それ以外のリンクは従来どおり `<a>` で新しいタブ表示。
+  - 実装: `frontend/src/lib/embed-url.ts`（URL 判定）、`frontend/src/components/MarkdownBody.tsx`（react-markdown の `a` / `img` カスタムコンポーネント）。画像は `loading="lazy"` と `decoding="async"` を付与。
+
+---
+
+## 8. 変更履歴
 
 - 2026-03-12: 初版（サムネイル URL・本文画像は既存 Markdown、動画はリンク or 埋め込み方針を記載）。同日レビュー反映（Proto フィールド番号明記・未設定時扱い・DB 長の注記）。
 - 2026-03-12: メディアのホスティングを追記（画質・オリジナル保持の説明、Cloudflare R2 推奨、GCS を代替として記載）。
 - 2026-03-12: アップローダーを要件に追加。管理画面から画像・動画をアップロードして操作を完結させる方針と、Phase 2 でアップローダー実装、セクション 5 で詳細を定義。
 - 2026-03-12: 全体レビュー反映（認証表記を Bearer セッションに統一、API に SearchPosts / PublishPost を明記、実装プランとの相互参照を追加）。
+- 2026-03-12: 実装状況を追記（Phase 1・Phase 2 完了内容と Phase 3 未着手）。
+- 2026-03-12: Phase 3 完了（動画埋め込み）。MarkdownBody で YouTube / Vimeo の許可 URL を iframe 表示、実装状況を更新。

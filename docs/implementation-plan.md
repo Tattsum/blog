@@ -21,7 +21,7 @@
 | フェーズ 3 | 完了 | 閲覧系・管理画面・タグ別一覧・AI 連携 UI まで実装済み。残りは Vertex AI 連携・SSG/ISR 最適化。 |
 | フェーズ 4 | 一部 | 認証・バリデーションは実施済み。セッション固定/CSRF・N+1/キャッシュ調整は未実施。 |
 | フェーズ 5 | 一部 | CI/CD 済み。**アクセスログ**: `backend/cmd/server` で slog JSON（Cloud Run 時は K_SERVICE により自動）・`X-Request-ID` 付与・`/health` と `/healthz` はログ除外。生存確認は Cloud Run では **`/health`** を使用（`/healthz` は予約のため使用不可）。監視・アラートは未実施。 |
-| フェーズ 6 | 未着手 | コメント・RSS・マルチテナント・監査ログは計画のみ。 |
+| フェーズ 6 | 一部 | コメント・RSS・マルチテナント・監査ログは計画のみ。**サムネイル・メディア・アップローダー**: Phase 1・2・3 完了（[post-thumbnail-and-media.md](post-thumbnail-and-media.md) の「7. 実装状況」参照）。動画埋め込みは YouTube / Vimeo の許可 URL を iframe 表示。 |
 
 ---
 
@@ -137,6 +137,7 @@
 
 - **サムネイル・本文メディア・アップローダー**
   - 記事サムネイル URL、本文画像・動画のホスティング、管理画面からのアップロード機能。詳細は [post-thumbnail-and-media.md](post-thumbnail-and-media.md) を参照。
+  - **実装済み（Phase 1・2・3）**: DB に `thumbnail_url`、Proto/API/管理画面・一覧・詳細でサムネイル表示。`POST /upload` で管理者認証必須の multipart アップロード、ローカルまたは GCS ストレージ、管理画面で「ファイルを選択してアップロード」（サムネイル）と「画像・動画をアップロードして挿入」（本文 Markdown）。環境変数: ローカルは `UPLOAD_DIR`（任意で `BASE_URL`）、GCS は `MEDIA_STORAGE=gcs` と `GCS_MEDIA_BUCKET`。R2 は未実装（同一 `MediaStorage` インターフェースで追加可能）。**Phase 3**: 記事詳細の本文で YouTube / Vimeo の埋め込み許可 URL を iframe 表示（`MarkdownBody`・`embed-url.ts`）。
 - **Google アカウントでの管理者ログイン**
   - 管理画面で「Google でログイン」を選べるようにする。OAuth 2.0 / OpenID Connect で Google の ID トークンを取得し、バックエンドで検証したうえで既存のセッション発行フローと統合。許可する Google アカウント（メール）を設定で絞る運用を想定。
 - **コメント・いいね機能**

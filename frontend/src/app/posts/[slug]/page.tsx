@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
 import { postClient } from "@/lib/api";
 import { Header } from "@/components/Header";
+import { MarkdownBody } from "@/components/MarkdownBody";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -81,7 +81,7 @@ export default async function PostPage({ params }: Props) {
           </time>
         )}
         <div className="post-body" style={{ lineHeight: 1.8, fontSize: "1rem" }}>
-          <ReactMarkdown>{bodyMarkdown}</ReactMarkdown>
+          <MarkdownBody>{bodyMarkdown}</MarkdownBody>
         </div>
       </article>
 
