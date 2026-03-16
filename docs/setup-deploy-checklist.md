@@ -543,6 +543,20 @@ Gemini の代わりに **Partner モデル（Claude）** を使う場合:
   - **Terraform で Cloud Run を管理している場合**: [terraform/README.md](../terraform/README.md) を参照し、`terraform.tfvars` に `media_storage = "gcs"` と `gcs_media_bucket = "blog-media"` を設定して `terraform apply` する。
 - 再デプロイ後、管理画面からアップロードすると URL は `https://storage.googleapis.com/blog-media/xxx` となり永続します。
 
+#### GCS をカスタムドメイン（例: asset.tattsum.com）で配信する場合
+
+R2 のカスタムドメインで Error 1014 が出る場合、GCS + GCP Load Balancer で同じドメインを使うと 1014 を避けられます（Cloudflare の DNS が「別 Cloudflare ゾーン」ではなく GCP の LB を指すため）。
+
+1. 上記のとおり GCS バケットを作成・公開読取・Cloud Run に書込権限を付与する。
+2. **GCP で HTTP(S) Load Balancer を構成**:
+   - バックエンド: **Backend bucket** で上記 GCS バケットを指定。
+   - **静的 IP を予約**（グローバル）。転送ルールで HTTPS を有効にし、**カスタムドメイン**（例: `asset.tattsum.com`）のホストルールを追加。証明書は Google 管理で `asset.tattsum.com` を追加する。
+   - 手順の概要は [GCP: Setting up a load balancer with a backend bucket](https://cloud.google.com/storage/docs/hosting-static-website#lb) を参照。
+3. **Cloudflare DNS**: `asset.tattsum.com` を **A レコード** で上記 Load Balancer の静的 IP に向ける（プロキシ有効でも可。GCP 向きのため 1014 は発生しない）。
+4. **Cloud Run に `GCS_PUBLIC_BASE_URL` を追加**:
+   - 値は `https://asset.tattsum.com`（末尾スラッシュなし）。アップロード API が返す URL がこのベース + オブジェクトキーになる。
+   - Terraform の場合: `terraform.tfvars` に `gcs_public_base_url = "https://asset.tattsum.com"` を追加して `terraform apply` する。
+
 #### R2 を選ぶ場合
 
 - **Cloudflare ダッシュボード**で [R2](https://dash.cloudflare.com/?to=/:account/r2) を開き、**Create bucket** でバケットを作成（例: `blog-media`）。
@@ -559,6 +573,64 @@ Gemini の代わりに **Partner モデル（Claude）** を使う場合:
   - `R2_PUBLIC_BASE_URL`（公開 URL のベース。r2.dev の場合は「Public development URL」の値、カスタムドメインの場合はその URL。末尾スラッシュなし）
   - **Terraform で Cloud Run を管理している場合**: `terraform.tfvars` に `media_storage = "r2"` と R2 用変数（`r2_account_id`, `r2_access_key_id`, `r2_secret_access_key`, `r2_bucket`, `r2_public_base_url`）を設定して `terraform apply` する。例は [terraform/terraform.tfvars.example](../terraform/terraform.tfvars.example) を参照。
 - 再デプロイ後、管理画面からアップロードすると、設定した公開 URL ベース + オブジェクトキーで永続します。
+
+#### R2 を `tattsum.com/asset` で配信する（Worker プロキシ）
+
+`asset.tattsum.com` のカスタムドメインで Error 1014 が解消しない場合でも、R2 自体は問題なく使えるケースが多い。その場合は、**Cloudflare Worker で `tattsum.com/asset/*` を R2 にプロキシする**構成にすると、URL を統一しつつ 1014 を回避できる。
+
+1. **R2 バケットの Public development URL を有効化**（一時的に r2.dev を使う。Rate limit を超えるほどの大規模トラフィックではない前提）:
+
+   - R2 ダッシュボード → 対象バケット（例: `blog-media`）→ **Settings** → **Public Development URL** → **Enable**。
+   - 表示された URL（例: `https://pub-xxxx.r2.dev`）を控える。
+
+2. **R2 向けの Cloudflare Worker を用意**（例: `blog-asset-proxy`）:
+
+   - すでに API 用に `tattsum.com/api/*` を Cloud Run にプロキシする Worker を使っているので、同様に `tattsum.com/asset/*` を R2 にプロキシする。
+   - Worker の疑似コード例:
+
+     ```js
+     const R2_BASE = "https://pub-xxxx.r2.dev"; // 実際の Public development URL に置き換え
+
+     export default {
+       async fetch(request, env, ctx) {
+         const url = new URL(request.url);
+         // /asset/xxx.png → xxx.png
+         const key = url.pathname.replace(/^\/asset\//, "");
+         if (!key) {
+           return new Response("Not Found", { status: 404 });
+         }
+         const r2Url = new URL(R2_BASE);
+         r2Url.pathname = "/" + key;
+         r2Url.search = url.search;
+         // 画像配信なので GET / HEAD のみ許可（POST 等は拒否）
+         if (request.method !== "GET" && request.method !== "HEAD") {
+           return new Response("Method Not Allowed", { status: 405 });
+         }
+         const res = await fetch(r2Url.toString(), {
+           method: request.method,
+           headers: request.headers,
+         });
+         return res;
+       },
+     };
+     ```
+
+   - Cloudflare ダッシュボード → **Workers & Pages** → 新規 Worker を作成し、上記コードをデプロイする。
+
+3. **Worker のルートを設定**:
+
+   - Worker の **Triggers / Routes** で `tattsum.com/asset/*` を追加し、`custom_domain: true` で有効化する（Pages / Worker のルート設定パターンは `wrangler.jsonc` の `routes` と同様）。
+
+4. **バックエンドの `R2_PUBLIC_BASE_URL` を `https://tattsum.com/asset` に変更**:
+
+   - `terraform.tfvars` の `r2_public_base_url` を `https://tattsum.com/asset` に変更し、`terraform apply` する。
+   - 以後、`POST /upload` は `https://tattsum.com/asset/<オブジェクトキー>` を返し、ブラウザから見ると API と同じオリジン（`tattsum.com`）で画像を配信できる。
+
+5. **既存の `asset.tattsum.com` URL をどうするか**:
+
+   - 既に発行済みの `https://asset.tattsum.com/...` は 1014 のままなので、必要に応じて記事編集画面からサムネイルや本文内画像を再アップロードし、`https://tattsum.com/asset/...` の URL に差し替える。
+
+この構成では、**R2 のエグレス無料**はそのままに、URL を `tattsum.com` ドメイン配下に統一できる。
 
 #### R2 カスタムドメインで Error 1014（CNAME Cross-User Banned）が出る場合
 
@@ -696,6 +768,25 @@ Cloudflare Pages のビルドで使う Node バージョンを固定すると、
 - **workers.dev**: `workers_dev: true` により本番は `blog.<アカウント>.workers.dev`（例: `blog.kurohari35.workers.dev`）で公開される。
 - **カスタムドメイン**: `routes` に `pattern` と `custom_domain: true` を指定（例: `tattsum.com`）。ドメインのゾーンが Cloudflare にあり、`npm run deploy` でデプロイするとルートと証明書が設定される。
 - ドメインを追加・変更する場合は `wrangler.jsonc` の `routes` を編集し、push して再デプロイする。ダッシュボードで手動追加する必要はない。
+
+#### 7.8.1 www をルートドメインへリダイレクト（任意）
+
+`www.tattsum.com` を `tattsum.com` に常時リダイレクトしたい場合、Cloudflare の **Redirect Rules** で設定する（[公式例: Redirect from WWW to root](https://developers.cloudflare.com/rules/url-forwarding/examples/redirect-www-to-root/)）。
+
+1. **www の DNS をプロキシ済みにする**  
+   Cloudflare ダッシュボード → **tattsum.com** → **DNS** → **レコード**。  
+   `www` のレコードが無ければ **レコードの追加** で、名前 `www`、タイプ **CNAME**、ターゲット `tattsum.com`（またはルートの A/AAAA と同じ向き）、**プロキシ ステータス: プロキシ済み**（オレンジの雲）で追加する。
+2. **リダイレクトルールを作成**  
+   **ルール** → **リダイレクトルール**（または **Rules** → **Redirect Rules**）→ **リダイレクトルールを作成**。
+3. **条件**  
+   **ワイルドカードパターン** を選び、**リクエスト URL** に `https://www.*` を入力。
+4. **リダイレクト先**  
+   **ターゲット URL**: `https://${1}`  
+   **クエリ文字列を保持**: オン  
+   **ステータスコード**: **301（永続的リダイレクト）**
+5. **ルール名**（例: `www to root`）を入力し、**デプロイ** する。
+
+これで `https://www.tattsum.com/` や `https://www.tattsum.com/blog/123` が、それぞれ `https://tattsum.com/`・`https://tattsum.com/blog/123` に 301 で転送される。HTTP の `http://www.tattsum.com` にはこのルールは適用されないため、必要なら別ルールで HTTP → HTTPS や `http://www.*` → `https://${1}` を追加する。
 
 ### 7.9 トラブルシューティング
 

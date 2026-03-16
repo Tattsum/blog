@@ -77,6 +77,13 @@ resource "google_cloud_run_v2_service" "blog_api" {
           value = var.gcs_media_bucket
         }
       }
+      dynamic "env" {
+        for_each = var.media_storage == "gcs" && var.gcs_media_bucket != null && var.gcs_media_bucket != "" && var.gcs_public_base_url != null && var.gcs_public_base_url != "" ? [1] : []
+        content {
+          name  = "GCS_PUBLIC_BASE_URL"
+          value = var.gcs_public_base_url
+        }
+      }
 
       # メディアストレージ: R2（media_storage=r2 かつ R2 用変数がすべて設定されているとき）
       dynamic "env" {

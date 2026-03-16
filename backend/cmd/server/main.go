@@ -128,7 +128,8 @@ func main() {
 			if bucket == "" {
 				slog.Warn("GCS_MEDIA_BUCKET not set; upload disabled")
 			} else {
-				gcs, err := media.NewGCSStorage(ctxBg, bucket)
+				publicBaseURL := strings.TrimSpace(os.Getenv("GCS_PUBLIC_BASE_URL"))
+				gcs, err := media.NewGCSStorage(ctxBg, bucket, publicBaseURL)
 				if err != nil {
 					slog.Warn("GCS storage disabled", "err", err)
 				} else {

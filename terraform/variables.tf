@@ -68,6 +68,12 @@ variable "gcs_media_bucket" {
   description = "GCS メディア用バケット名（media_storage=gcs のとき必須）。バケットは手動または別リソースで作成すること"
 }
 
+variable "gcs_public_base_url" {
+  type        = string
+  default     = null
+  description = "GCS メディアの公開 URL ベース（省略時は storage.googleapis.com/bucket 形式）。Load Balancer + カスタムドメイン（例: https://asset.example.com）で配信するときに指定。末尾スラッシュなし"
+}
+
 # R2 用（media_storage=r2 のとき必須）。r2_secret_access_key は機密のため tfvars を .gitignore に含めること
 variable "r2_account_id" {
   type        = string
