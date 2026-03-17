@@ -503,15 +503,56 @@ CI を使わず、ローカルでイメージをビルド → Artifact Registry 
       --role="roles/aiplatform.user"
     ```
 
-- **モデル変更**: Cloud Run の環境変数 `VERTEX_GEMINI_MODEL`（例: `gemini-2.0-flash-001`）。リージョンによって利用可能モデルが異なる場合がある。
+- **モデル変更**: Cloud Run の環境変数 `VERTEX_GEMINI_MODEL`（例: `gemini-2.5-flash` / `gemini-3.1-flash-lite-preview`）。**利用可能なモデル ID は Model Garden の一覧（publishers/google/models）にあるものを使う**。
+
+#### 6.4.1 利用可能な Gemini モデルを一次情報で確認する（Model Garden）
+
+Model Garden の Publisher モデル一覧は REST の `v1beta1/publishers/{publisher}/models` で確認できる（公式: Vertex AI `publishers.models.list`）。
+
+ローカルで叩く場合、ユーザーの ADC は quota project が必要になるため、先に設定する:
+
+```bash
+gcloud auth application-default login
+gcloud auth application-default set-quota-project $GCP_PROJECT_ID
+```
+
+一覧取得（例: us-central1）:
+
+```bash
+ACCESS_TOKEN="$(gcloud auth application-default print-access-token)"
+curl -sS \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "X-Goog-User-Project: $GCP_PROJECT_ID" \
+  "https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/google/models?pageSize=200" \
+  | jq -r '.publisherModels[]
+    | select(.name | test("models/gemini-"))
+    | [.name, .versionId] | @tsv'
+```
+
+`publishers/google/models/gemini-2.5-flash` のように出た末尾（`gemini-2.5-flash`）を `VERTEX_GEMINI_MODEL` に指定する。
 
 ### 6.5 Vertex AI 上の Claude を使う（任意）
 
 Gemini の代わりに **Partner モデル（Claude）** を使う場合:
 
 - Cloud Run の環境変数 **`AI_PROVIDER=vertex-claude`**（または `claude`）を設定する。同一の `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` と `roles/aiplatform.user` を利用。
-- 任意で **`VERTEX_CLAUDE_MODEL`**（例: SDK 定数に合わせ `claude-sonnet-4-5-20250929`）。未設定時はコード側デフォルトを使用。リージョンによって Model Garden で利用可否が異なる。
+- 任意で **`VERTEX_CLAUDE_MODEL`**（例: `claude-sonnet-4-6` / `claude-opus-4`）。未設定時はコード側デフォルトを使用。リージョンによって Model Garden で利用可否が異なる。
 - 実装は `anthropic-sdk-go` の Vertex オプション（ADC）。本番では Claude が有効なリージョンを選ぶこと。
+
+#### 6.5.1 利用可能な Claude モデルを一次情報で確認する（Model Garden）
+
+```bash
+ACCESS_TOKEN="$(gcloud auth application-default print-access-token)"
+curl -sS \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "X-Goog-User-Project: $GCP_PROJECT_ID" \
+  "https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/anthropic/models?pageSize=200" \
+  | jq -r '.publisherModels[]
+    | select(.name | test("models/claude-"))
+    | [.name, .versionId] | @tsv'
+```
+
+末尾（例: `claude-sonnet-4-6`）を `VERTEX_CLAUDE_MODEL` に指定する。Model Garden 上で `requestAccess` が出るモデルは、コンソールの指示に従ってアクセス申請が必要。
 
 ### 6.6 メディアアップロードを GCS または R2 で永続化する（推奨）
 

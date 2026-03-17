@@ -41,3 +41,11 @@ cloud_run_image = "asia-northeast1-docker.pkg.dev/your-gcp-project-id/blog-repo/
 # デフォルト（gemini-1.5-flash-002）で問題ない場合は省略可。
 # gemini-2.0-flash-001 など別モデルを使いたい場合に上書きする。
 # vertex_gemini_model = "gemini-1.5-flash-002"
+
+# --- AI（Vertex 経由で統一）---
+# Claude を優先して使う（推奨: 運用統一したい場合）
+# ai_provider = "claude"  # または "vertex-claude"
+# vertex_claude_model = "claude-sonnet-4-6"   # Model Garden の publishers/anthropic/models を参照
+#
+# Gemini を使う（デフォルト）。モデルは Model Garden の publishers/google/models にある ID を指定
+# vertex_gemini_model = "gemini-2.5-flash"

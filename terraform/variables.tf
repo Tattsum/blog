@@ -107,8 +107,20 @@ variable "r2_public_base_url" {
   description = "Cloudflare R2: 公開 URL ベース（例: https://pub-xxxx.r2.dev）。末尾スラッシュなし（media_storage=r2 のとき必須）"
 }
 
+variable "ai_provider" {
+  type        = string
+  default     = ""
+  description = "AI プロバイダ。空=Gemini（Vertex）優先。claude / vertex-claude を指定すると Vertex Claude を優先して利用する"
+}
+
 variable "vertex_gemini_model" {
   type        = string
-  default     = "gemini-1.5-flash-002"
-  description = "Vertex Gemini 用のモデル ID。未指定時は gemini-1.5-flash-002 を使用（gemini-2.0-flash-001 が利用できないプロジェクト向け）。"
+  default     = "gemini-2.5-flash"
+  description = "Vertex Gemini 用のモデル ID（例: gemini-2.5-flash, gemini-3.1-flash-lite-preview）。Model Garden の一覧（publishers/google/models）にある ID を指定する"
+}
+
+variable "vertex_claude_model" {
+  type        = string
+  default     = ""
+  description = "Vertex Claude 用のモデル ID（例: claude-sonnet-4-6）。Model Garden の一覧（publishers/anthropic/models）にある ID を指定する。空ならアプリ側デフォルト"
 }
