@@ -786,6 +786,7 @@ Cloudflare Pages のビルドで使う Node バージョンを固定すると、
 
 リポジトリの `frontend/wrangler.jsonc` に設定を置き、**本番用 API URL もリポジトリで管理**しています。
 
+- `@opennextjs/cloudflare` / `wrangler`（開発依存）の都合で `undici` が脆弱性レンジに入ることがあるため、本リポジトリでは `frontend/package.json` の `overrides` で安全なバージョンに固定する運用を採用しています（`npm audit` の結果を優先）。
 - **ローカル用**: `vars.NEXT_PUBLIC_API_URL` に `http://localhost:8080` を記載。
 - **本番用**: `env.production.vars.NEXT_PUBLIC_API_URL` に Cloud Run の **regional URL**（例: `https://blog-backend-PROJECT_NUMBER.asia-northeast1.run.app`）を記載。あわせて Next のビルド時に読まれる **`frontend/.env.production`** にも同じ URL を記載する。**`terraform output cloud_run_url` は短い URL を返すため本番では使わず、`/health` が `ok` になる regional URL を直接記載する。**
 - **Cloudflare ダッシュボードの「変数とシークレット」には `NEXT_PUBLIC_API_URL` を設定しない**。設定するとダッシュボードの値が優先され、リポジトリを更新しても反映されない。URL 変更時は `.env.production` と `wrangler.jsonc` の両方を更新し、push して再デプロイする。
