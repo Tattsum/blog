@@ -6,6 +6,7 @@ import { useAdmin } from "../AdminProvider";
 import type { Post } from "@/gen/blog/v1/post_pb";
 import { Post_Status } from "@/gen/blog/v1/post_pb";
 import { AdminGate } from "../AdminGate";
+import { toAdminErrorMessage } from "@/lib/admin-error";
 
 export default function AdminPostsPage() {
   return (
@@ -39,7 +40,7 @@ function AdminPostsList() {
         setPosts(res.posts ?? []);
         setTotalCount(res.totalCount ?? 0);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "一覧の取得に失敗しました"))
+      .catch((e) => setError(toAdminErrorMessage(e, "一覧の取得に失敗しました")))
       .finally(() => setLoading(false));
   }, [client, statusFilter]);
 

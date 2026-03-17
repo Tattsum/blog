@@ -7,6 +7,7 @@ import { useAdmin } from "../../../AdminProvider";
 import { AdminGate } from "../../../AdminGate";
 import { getUnpublishFlagForPublishButton } from "./publish-utils";
 import { uploadMedia } from "@/lib/admin-api";
+import { toAdminErrorMessage } from "@/lib/admin-error";
 import type { Post } from "@/gen/blog/v1/post_pb";
 import { Post_Status } from "@/gen/blog/v1/post_pb";
 
@@ -88,7 +89,7 @@ function EditPostForm() {
       });
       setPost((prev) => (prev ? { ...prev, title: title.trim(), slug: slug.trim(), bodyMarkdown, summary, thumbnailUrl: thumbnailUrl.trim() } : null));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "更新に失敗しました");
+      setError(toAdminErrorMessage(e, "更新に失敗しました"));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +105,7 @@ function EditPostForm() {
       const res = await client.getPost({ id });
       if (res.post) setPost(res.post);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "公開状態の変更に失敗しました");
+      setError(toAdminErrorMessage(e, "公開状態の変更に失敗しました"));
     } finally {
       setSubmitting(false);
     }
@@ -119,7 +120,7 @@ function EditPostForm() {
       await client.deletePost({ id });
       router.push("/admin/posts");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "削除に失敗しました");
+      setError(toAdminErrorMessage(e, "削除に失敗しました"));
       setSubmitting(false);
     }
   }
@@ -139,7 +140,7 @@ function EditPostForm() {
       });
       setSummary(res.summary ?? "");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "要約の生成に失敗しました");
+      setError(toAdminErrorMessage(e, "要約の生成に失敗しました"));
     } finally {
       setAiBusy(false);
     }
@@ -160,7 +161,7 @@ function EditPostForm() {
       });
       setSuggestedBody(res.suggestedBody ?? "");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "下書き支援の取得に失敗しました");
+      setError(toAdminErrorMessage(e, "下書き支援の取得に失敗しました"));
     } finally {
       setAiBusy(false);
     }
@@ -184,12 +185,7 @@ function EditPostForm() {
       });
       setThumbnailUrl(url);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "アップロードに失敗しました";
-      setUploadThumbError(
-        msg === "unauthorized"
-          ? "認証エラーです。一度ログアウトして再ログインするか、管理者キーで入れ直してください。"
-          : msg
-      );
+      setUploadThumbError(toAdminErrorMessage(err, "アップロードに失敗しました"));
     } finally {
       setUploadingThumb(false);
     }
@@ -217,12 +213,7 @@ function EditPostForm() {
         setBodyMarkdown((prev) => prev + insert);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "画像のアップロードに失敗しました";
-      setError(
-        msg === "unauthorized"
-          ? "認証エラーです。一度ログアウトして再ログインするか、管理者キーで入れ直してください。"
-          : msg
-      );
+      setError(toAdminErrorMessage(err, "画像のアップロードに失敗しました"));
     }
   }
 

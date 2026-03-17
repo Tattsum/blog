@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAdmin } from "../../AdminProvider";
 import { AdminGate } from "../../AdminGate";
 import { uploadMedia } from "@/lib/admin-api";
+import { toAdminErrorMessage } from "@/lib/admin-error";
 
 export default function NewPostPage() {
   return (
@@ -79,12 +80,7 @@ function NewPostForm() {
         setBodyMarkdown((prev) => prev + insert);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "画像のアップロードに失敗しました";
-      setError(
-        msg === "unauthorized"
-          ? "認証エラーです。一度ログアウトして再ログインするか、管理者キーで入れ直してください。"
-          : msg
-      );
+      setError(toAdminErrorMessage(err, "画像のアップロードに失敗しました"));
     }
   }
 
@@ -110,7 +106,7 @@ function NewPostForm() {
       if (id) router.push(`/admin/posts/${id}/edit`);
       else router.push("/admin/posts");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "作成に失敗しました");
+      setError(toAdminErrorMessage(e, "作成に失敗しました"));
     } finally {
       setSubmitting(false);
     }
