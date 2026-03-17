@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "schedule": ["every 5 minutes"],
+  "schedule": ["at any time"],
   "timezone": "Asia/Tokyo",
   "labels": ["dependencies"],
   "packageRules": [
