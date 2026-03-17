@@ -62,10 +62,7 @@ func (r *TagRepository) GetBySlug(ctx context.Context, slug tag.Slug) (*tag.Tag,
 
 // List はタグ一覧と総件数を返す。
 func (r *TagRepository) List(ctx context.Context, page, pageSize int32) ([]*tag.Tag, int64, error) {
-	offset := (int64(page) - 1) * int64(pageSize)
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max((int64(page)-1)*int64(pageSize), 0)
 	if pageSize <= 0 || pageSize > 100 {
 		pageSize = 20
 	}

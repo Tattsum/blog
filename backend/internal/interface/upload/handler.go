@@ -56,10 +56,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	size := header.Size
-	if size < 0 {
-		size = 0
-	}
+	size := max(header.Size, 0)
 	if err := uploadapp.ValidateMedia(contentType, size); err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return

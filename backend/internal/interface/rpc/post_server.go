@@ -29,10 +29,7 @@ func NewPostServer(posts repository.PostRepository, adminKey string, sessionStor
 
 // ListPosts は記事一覧を返す。未認証時は status=published のみ許可。
 func (s *PostServer) ListPosts(ctx context.Context, req *connect.Request[blogv1.ListPostsRequest]) (*connect.Response[blogv1.ListPostsResponse], error) {
-	page := req.Msg.GetPage()
-	if page < 1 {
-		page = 1
-	}
+	page := max(req.Msg.GetPage(), 1)
 	pageSize := req.Msg.GetPageSize()
 	if pageSize <= 0 || pageSize > 100 {
 		pageSize = 20
@@ -198,10 +195,7 @@ func (s *PostServer) SearchPosts(ctx context.Context, req *connect.Request[blogv
 	if query == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("query is required"))
 	}
-	page := req.Msg.GetPage()
-	if page < 1 {
-		page = 1
-	}
+	page := max(req.Msg.GetPage(), 1)
 	pageSize := req.Msg.GetPageSize()
 	if pageSize <= 0 || pageSize > 100 {
 		pageSize = 20

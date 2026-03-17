@@ -45,7 +45,7 @@ func (r *PostRepository) GetBySlug(ctx context.Context, slug post.Slug) (*post.P
 	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE slug = ?`, slug.String())
 }
 
-func (r *PostRepository) getOne(ctx context.Context, query string, arg interface{}) (*post.Post, error) {
+func (r *PostRepository) getOne(ctx context.Context, query string, arg any) (*post.Post, error) {
 	var p post.Post
 	var slug string
 	var thumbnailURL sql.NullString
@@ -75,10 +75,7 @@ func (r *PostRepository) getOne(ctx context.Context, query string, arg interface
 
 // List は条件に応じて記事一覧と総件数を返す。
 func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFilter) ([]*post.Post, int64, error) {
-	offset := (int64(filter.Page) - 1) * int64(filter.PageSize)
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max((int64(filter.Page)-1)*int64(filter.PageSize), 0)
 	limit := filter.PageSize
 	if limit <= 0 || limit > 100 {
 		limit = 20
@@ -87,7 +84,7 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	var count int64
 	if filter.TagID != "" {
 		countQuery := `SELECT COUNT(DISTINCT p.id) FROM posts p INNER JOIN post_tags pt ON pt.post_id = p.id AND pt.tag_id = ? WHERE 1=1`
-		countArgs := []interface{}{filter.TagID}
+		countArgs := []any{filter.TagID}
 		if filter.Status != post.StatusUnspecified {
 			countQuery += ` AND p.status = ?`
 			countArgs = append(countArgs, int32(filter.Status))
@@ -97,7 +94,7 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 		}
 	} else {
 		countQuery := `SELECT COUNT(*) FROM posts WHERE 1=1`
-		countArgs := []interface{}{}
+		countArgs := []any{}
 		if filter.Status != post.StatusUnspecified {
 			countQuery += ` AND status = ?`
 			countArgs = append(countArgs, int32(filter.Status))
@@ -108,11 +105,11 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	}
 
 	var listQuery string
-	var listArgs []interface{}
+	var listArgs []any
 	if filter.TagID != "" {
 		listQuery = `SELECT p.id, p.title, p.slug, p.body_markdown, p.summary, p.thumbnail_url, p.status, p.created_at, p.updated_at, p.published_at
 			FROM posts p INNER JOIN post_tags pt ON pt.post_id = p.id AND pt.tag_id = ? WHERE 1=1`
-		listArgs = []interface{}{filter.TagID}
+		listArgs = []any{filter.TagID}
 		if filter.Status != post.StatusUnspecified {
 			listQuery += ` AND p.status = ?`
 			listArgs = append(listArgs, int32(filter.Status))
@@ -121,7 +118,7 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 		listArgs = append(listArgs, limit, offset)
 	} else {
 		listQuery = `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE 1=1`
-		listArgs = []interface{}{}
+		listArgs = []any{}
 		if filter.Status != post.StatusUnspecified {
 			listQuery += ` AND status = ?`
 			listArgs = append(listArgs, int32(filter.Status))
@@ -190,10 +187,7 @@ func (r *PostRepository) Delete(ctx context.Context, id string) error {
 
 // Search は全文検索（LIKE）で記事一覧と総件数を返す。本番では FULLTEXT 等を検討。
 func (r *PostRepository) Search(ctx context.Context, query string, page, pageSize int32) ([]*post.Post, int64, error) {
-	offset := (int64(page) - 1) * int64(pageSize)
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max((int64(page)-1)*int64(pageSize), 0)
 	if pageSize <= 0 || pageSize > 100 {
 		pageSize = 20
 	}
@@ -276,7 +270,7 @@ func (r *PostRepository) getTagIDsByPostIDs(ctx context.Context, postIDs []strin
 	}
 	// 呼び出し元（List/Search）は pageSize<=100 を保証している前提。巨大な IN 句を避ける。
 	placeholders := strings.TrimRight(strings.Repeat("?,", len(postIDs)), ",")
-	args := make([]interface{}, 0, len(postIDs))
+	args := make([]any, 0, len(postIDs))
 	for _, id := range postIDs {
 		args = append(args, id)
 	}
@@ -321,7 +315,7 @@ func (r *PostRepository) replacePostTags(ctx context.Context, postID string, tag
 	return nil
 }
 
-func nullTime(t *time.Time) interface{} {
+func nullTime(t *time.Time) any {
 	if t == nil {
 		return nil
 	}
@@ -335,7 +329,7 @@ func nullTimePtr(n sql.NullTime) *time.Time {
 	return &n.Time
 }
 
-func nullString(s string) interface{} {
+func nullString(s string) any {
 	if s == "" {
 		return nil
 	}

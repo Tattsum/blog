@@ -29,10 +29,7 @@ func NewTagServer(tags repository.TagRepository, adminKey string, sessionStore S
 
 // ListTags はタグ一覧を返す。
 func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.ListTagsRequest]) (*connect.Response[blogv1.ListTagsResponse], error) {
-	page := req.Msg.GetPage()
-	if page < 1 {
-		page = 1
-	}
+	page := max(req.Msg.GetPage(), 1)
 	pageSize := req.Msg.GetPageSize()
 	if pageSize <= 0 || pageSize > 100 {
 		pageSize = 20
