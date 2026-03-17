@@ -539,6 +539,15 @@ Gemini の代わりに **Partner モデル（Claude）** を使う場合:
 - 任意で **`VERTEX_CLAUDE_MODEL`**（例: `claude-sonnet-4-6` / `claude-opus-4`）。未設定時はコード側デフォルトを使用。リージョンによって Model Garden で利用可否が異なる。
 - 実装は `anthropic-sdk-go` の Vertex オプション（ADC）。本番では Claude が有効なリージョンを選ぶこと。
 
+#### 6.5.0 管理画面から Gemini / Claude を切り替える
+
+管理画面 `/admin` のナビゲーションにある **「AI」プルダウン**から、記事編集時の要約・下書き支援に使うプロバイダを選択できる。
+
+- `Gemini（デフォルト）`: `X-AI-Provider` ヘッダなし（サーバ側の `AI_PROVIDER` または Gemini を優先）
+- `Claude`: `X-AI-Provider: claude` を付与し、Vertex Claude が有効ならそちらを利用
+
+選択状態はブラウザの `sessionStorage`（キー: `blog-ai-provider`）に保存され、ページをまたいでも同一ブラウザ内では継続される。ログアウトするとセッションとあわせてクリアされる。
+
 #### 6.5.1 利用可能な Claude モデルを一次情報で確認する（Model Garden）
 
 ```bash
