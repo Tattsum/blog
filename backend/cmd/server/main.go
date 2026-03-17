@@ -89,29 +89,31 @@ func main() {
 		sessionStore := rpc.NewMemSessionStore()
 		adminKey := os.Getenv("ADMIN_API_KEY")
 
-		var textGen appai.TextGenerator
+		var geminiGen appai.TextGenerator
+		var claudeGen appai.TextGenerator
 		ctxBg := context.Background()
 		provider := strings.ToLower(strings.TrimSpace(os.Getenv("AI_PROVIDER")))
-		if provider == "vertex-claude" || provider == "claude" {
-			if cl, err := appai.NewVertexClaudeFromEnv(ctxBg); err != nil {
-				slog.Warn("vertex claude disabled", "err", err)
-			} else if cl != nil {
-				textGen = cl
-				slog.Info("ai provider", "name", "vertex-claude")
-			}
+		if cl, err := appai.NewVertexClaudeFromEnv(ctxBg); err != nil {
+			slog.Warn("vertex claude disabled", "err", err)
+		} else if cl != nil {
+			claudeGen = cl
 		}
-		if textGen == nil {
-			if vc, err := vertexai.NewFromEnv(ctxBg); err != nil {
-				slog.Warn("vertex gemini disabled", "err", err)
-			} else if vc != nil {
-				textGen = appai.NewVertexGemini(vc)
-				slog.Info("ai provider", "name", "vertex-gemini")
+		if vc, err := vertexai.NewFromEnv(ctxBg); err != nil {
+			slog.Warn("vertex gemini disabled", "err", err)
+		} else if vc != nil {
+			geminiGen = appai.NewVertexGemini(vc)
+		}
+		if provider == "vertex-claude" || provider == "claude" {
+			if claudeGen != nil {
+				slog.Info("ai provider default", "name", "vertex-claude")
 			}
+		} else if geminiGen != nil {
+			slog.Info("ai provider default", "name", "vertex-gemini")
 		}
 
 		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))
 		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey, sessionStore))
-		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore, textGen))
+		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore, provider, geminiGen, claudeGen))
 		authPath, authHandler := blogv1connect.NewAuthServiceHandler(rpc.NewAuthServer(userRepo, sessionStore, 24*time.Hour))
 
 		mux.Handle(postPath, postHandler)

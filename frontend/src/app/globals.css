@@ -472,6 +472,27 @@ textarea:focus-visible,
   box-sizing: border-box;
 }
 
+.admin-select {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--foreground);
+}
+
+.admin-inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-inline-label {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
 .admin-textarea {
   min-height: 120px;
   resize: vertical;

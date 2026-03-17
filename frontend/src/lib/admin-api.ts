@@ -9,6 +9,8 @@ import { AIService } from "@/gen/blog/v1/ai_pb";
 import { AuthService } from "@/gen/blog/v1/auth_pb";
 import { edgeSafeFetch } from "@/lib/edge-safe-fetch";
 
+const AI_PROVIDER_STORAGE_KEY = "blog-ai-provider";
+
 const baseUrl =
   typeof window !== "undefined"
     ? (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080")
@@ -16,6 +18,11 @@ const baseUrl =
 
 const baseTransport = () =>
   createConnectTransport({ baseUrl, fetch: edgeSafeFetch });
+
+function getStoredAiProvider(): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(AI_PROVIDER_STORAGE_KEY) ?? "";
+}
 
 /** ログイン用。認証ヘッダーなしで AuthService.Login を呼ぶ */
 export function getLoginClient() {
@@ -26,6 +33,8 @@ export function getLoginClient() {
 function createBearerTransport(sessionToken: string) {
   const interceptor: Interceptor = (next) => async (req) => {
     req.header.set("Authorization", `Bearer ${sessionToken}`);
+    const provider = getStoredAiProvider();
+    if (provider) req.header.set("X-AI-Provider", provider);
     return await next(req);
   };
   return createConnectTransport({
@@ -39,6 +48,8 @@ function createBearerTransport(sessionToken: string) {
 function createAdminKeyTransport(adminKey: string) {
   const interceptor: Interceptor = (next) => async (req) => {
     req.header.set("X-Admin-Key", adminKey);
+    const provider = getStoredAiProvider();
+    if (provider) req.header.set("X-AI-Provider", provider);
     return await next(req);
   };
   return createConnectTransport({
