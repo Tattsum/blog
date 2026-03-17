@@ -106,3 +106,9 @@ variable "r2_public_base_url" {
   default     = null
   description = "Cloudflare R2: 公開 URL ベース（例: https://pub-xxxx.r2.dev）。末尾スラッシュなし（media_storage=r2 のとき必須）"
 }
+
+variable "vertex_gemini_model" {
+  type        = string
+  default     = "gemini-1.5-flash-002"
+  description = "Vertex Gemini 用のモデル ID。未指定時は gemini-1.5-flash-002 を使用（gemini-2.0-flash-001 が利用できないプロジェクト向け）。"
+}
