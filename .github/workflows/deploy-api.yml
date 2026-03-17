@@ -27,6 +27,8 @@ jobs:
       CONNECTION_NAME: ${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION || 'asia-northeast1' }}:blog-mysql
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -38,7 +40,34 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Detect migration changes
+        id: mig
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.sha }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # マイグレーションが変更されたときだけ実行する（無駄な Cloud SQL 接続/時間を削減）
+          if git diff --name-only "$BEFORE" "$AFTER" | grep -q '^backend/db/migrations/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Migrations skipped
+        if: steps.mig.outputs.changed != 'true'
+        run: echo "No migration changes detected; skipping migrations."
+
       - name: Run migrations (Cloud SQL Proxy + golang-migrate)
+        if: steps.mig.outputs.changed == 'true'
         env:
           MIGRATION_PASSWORD: ${{ secrets.MIGRATION_PASSWORD }}
           MIGRATION_DSN: ${{ secrets.MIGRATION_DSN }}
