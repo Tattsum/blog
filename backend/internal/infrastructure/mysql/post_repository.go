@@ -3,6 +3,8 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Tattsum/blog/backend/internal/domain/post"
@@ -63,7 +65,10 @@ func (r *PostRepository) getOne(ctx context.Context, query string, arg interface
 	p.ThumbnailURL = nullStringVal(thumbnailURL)
 	p.Status = post.Status(status)
 	p.PublishedAt = nullTimePtr(publishedAt)
-	tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
+	tagIDs, err := r.getTagIDsByPostID(ctx, p.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get tag ids by post id %s: %w", p.ID, err)
+	}
 	p.TagIDs = tagIDs
 	return &p, nil
 }
@@ -131,7 +136,8 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	}
 	defer func() { _ = rows.Close() }()
 
-	var list []*post.Post
+	list := make([]*post.Post, 0, limit)
+	postIDs := make([]string, 0, limit)
 	for rows.Next() {
 		var p post.Post
 		var slug string
@@ -145,11 +151,23 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 		p.ThumbnailURL = nullStringVal(thumbnailURL)
 		p.Status = post.Status(status)
 		p.PublishedAt = nullTimePtr(publishedAt)
-		tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
-		p.TagIDs = tagIDs
 		list = append(list, &p)
+		postIDs = append(postIDs, p.ID)
 	}
-	return list, count, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if len(list) == 0 {
+		return list, count, nil
+	}
+	tagMap, err := r.getTagIDsByPostIDs(ctx, postIDs)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get tag ids by post ids: %w", err)
+	}
+	for _, p := range list {
+		p.TagIDs = tagMap[p.ID]
+	}
+	return list, count, nil
 }
 
 // Update は記事を1件更新する。
@@ -201,7 +219,8 @@ func (r *PostRepository) Search(ctx context.Context, query string, page, pageSiz
 	}
 	defer func() { _ = rows.Close() }()
 
-	var list []*post.Post
+	list := make([]*post.Post, 0, pageSize)
+	postIDs := make([]string, 0, pageSize)
 	for rows.Next() {
 		var p post.Post
 		var slug string
@@ -215,11 +234,23 @@ func (r *PostRepository) Search(ctx context.Context, query string, page, pageSiz
 		p.ThumbnailURL = nullStringVal(thumbnailURL)
 		p.Status = post.Status(status)
 		p.PublishedAt = nullTimePtr(publishedAt)
-		tagIDs, _ := r.getTagIDsByPostID(ctx, p.ID)
-		p.TagIDs = tagIDs
 		list = append(list, &p)
+		postIDs = append(postIDs, p.ID)
 	}
-	return list, count, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if len(list) == 0 {
+		return list, count, nil
+	}
+	tagMap, err := r.getTagIDsByPostIDs(ctx, postIDs)
+	if err != nil {
+		return nil, 0, fmt.Errorf("get tag ids by post ids: %w", err)
+	}
+	for _, p := range list {
+		p.TagIDs = tagMap[p.ID]
+	}
+	return list, count, nil
 }
 
 func (r *PostRepository) getTagIDsByPostID(ctx context.Context, postID string) ([]string, error) {
@@ -237,6 +268,45 @@ func (r *PostRepository) getTagIDsByPostID(ctx context.Context, postID string) (
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+func (r *PostRepository) getTagIDsByPostIDs(ctx context.Context, postIDs []string) (map[string][]string, error) {
+	if len(postIDs) == 0 {
+		return map[string][]string{}, nil
+	}
+	// 呼び出し元（List/Search）は pageSize<=100 を保証している前提。巨大な IN 句を避ける。
+	placeholders := strings.TrimRight(strings.Repeat("?,", len(postIDs)), ",")
+	args := make([]interface{}, 0, len(postIDs))
+	for _, id := range postIDs {
+		args = append(args, id)
+	}
+	q := fmt.Sprintf(
+		`SELECT post_id, tag_id FROM post_tags WHERE post_id IN (%s) ORDER BY post_id, tag_id`,
+		placeholders,
+	)
+	rows, err := r.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	out := make(map[string][]string, len(postIDs))
+	for rows.Next() {
+		var postID, tagID string
+		if err := rows.Scan(&postID, &tagID); err != nil {
+			return nil, err
+		}
+		out[postID] = append(out[postID], tagID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// ensure empty slice for posts without tags
+	for _, id := range postIDs {
+		if _, ok := out[id]; !ok {
+			out[id] = []string{}
+		}
+	}
+	return out, nil
 }
 
 func (r *PostRepository) replacePostTags(ctx context.Context, postID string, tagIDs []string) error {
