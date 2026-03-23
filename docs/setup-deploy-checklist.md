@@ -563,6 +563,8 @@ curl -sS \
 
 末尾（例: `claude-sonnet-4-6`）を `VERTEX_CLAUDE_MODEL` に指定する。Model Garden 上で `requestAccess` が出るモデルは、コンソールの指示に従ってアクセス申請が必要。
 
+また、未設定のままでも Claude が動くケースがありますが、コード側デフォルトモデル（`claude-sonnet-4-5-20250929`）が Model Garden 上で利用できない場合は、Cloud Run ログに `Publisher Model ... was not found or your project does not have access to it` のような 404/NOT_FOUND が出ます。その場合は、`terraform.tfvars` の `vertex_claude_model`（および必要なら `ai_provider=vertex-claude`）を利用可能なモデル ID に固定し、`terraform apply` 後に API を再デプロイしてください。
+
 ### 6.6 メディアアップロードを GCS または R2 で永続化する（推奨）
 
 管理画面からアップロードしたサムネイル・本文画像の URL が **`https://<Cloud Run URL>/uploads/xxx`** の場合、**Cloud Run のコンテナはエフェメラル**なため、再起動・再デプロイでファイルが消え、画像が 404 になります。本番では **GCS または R2 に保存**してください。
