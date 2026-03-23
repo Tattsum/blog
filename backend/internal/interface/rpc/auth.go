@@ -7,6 +7,7 @@ import (
 	"unicode"
 
 	"connectrpc.com/connect"
+	"github.com/gosimple/unidecode"
 )
 
 const (
@@ -51,12 +52,15 @@ func requireAdminOrSession(adminKey string, header http.Header, sessionStore Ses
 }
 
 // Slugify はタイトルや名前を URL 用スラグに変換する（小文字・空白をハイフン・英数字とハイフンのみ）。
+// 日本語など非 ASCII は、unidecode によるラテン文字への近似（転写）を先に行ってから正規化する。
 func Slugify(s string) string {
+	// 日本語など非 ASCII を URL セーフな文字列に寄せるため、先にラテン文字へ近似変換する。
+	s = unidecode.Unidecode(s)
 	s = strings.TrimSpace(strings.ToLower(s))
 	var b strings.Builder
 	var prevHyphen bool
 	for _, r := range s {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
+		if (unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_') && r <= unicode.MaxASCII {
 			b.WriteRune(r)
 			prevHyphen = false
 		} else if (r == ' ' || r == '-') && !prevHyphen {

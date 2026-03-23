@@ -17,7 +17,7 @@ func TestSlugify(t *testing.T) {
 		{"a", "a"},
 		{"---", ""},
 		{"Hello   World", "hello-world"},
-		{"日本語", "日本語"},
+		{"日本語", "ri-ben-yu"},
 		{"Go 1.21", "go-121"},
 	}
 	for _, tt := range tests {

@@ -158,7 +158,7 @@ service PostService {
 | 種別 | フィールド | 型 | 必須/任意 | 説明 |
 | --- | --- | --- | --- | --- |
 | リクエスト | title | string | 必須 | タイトル |
-| リクエスト | slug | string | 任意 | URL 用スラグ。省略時は title から生成 |
+| リクエスト | slug | string | 任意 | URL 用スラグ。省略時は title から生成（日本語（漢字/ひらがな/カタカナ）が含まれる場合は英語に翻訳してから正規化） |
 | リクエスト | body_markdown | string | 必須 | 本文（Markdown） |
 | リクエスト | summary | string | 任意 | 要約 |
 | リクエスト | tag_ids | string[] | 任意 | タグ ID の配列 |
@@ -286,7 +286,7 @@ CodeInvalidArgument（page / page_size が不正）
 | 種別 | フィールド | 型 | 必須/任意 | 説明 |
 | --- | --- | --- | --- | --- |
 | リクエスト | name | string | 必須 | 表示名 |
-| リクエスト | slug | string | 任意 | スラグ。省略時は name から生成 |
+| リクエスト | slug | string | 任意 | スラグ。省略時は name から生成（日本語は英語風に近似変換してから正規化） |
 | レスポンス | tag | Tag | 必須 | 作成されたタグ |
 
 #### CreateTag — エラーコード

@@ -3,10 +3,14 @@ package rpc
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"strings"
 	"time"
+	"unicode"
 
 	"connectrpc.com/connect"
+	"github.com/Tattsum/blog/backend/internal/application/ai"
 	"github.com/Tattsum/blog/backend/internal/domain/post"
 	"github.com/Tattsum/blog/backend/internal/domain/repository"
 	blogv1 "github.com/Tattsum/blog/gen/blog/v1"
@@ -17,14 +21,24 @@ import (
 // PostServer は PostService の connect-go ハンドラ実装。
 type PostServer struct {
 	blogv1connect.UnimplementedPostServiceHandler
-	posts        repository.PostRepository
-	adminKey     string
-	sessionStore SessionStore
+	posts           repository.PostRepository
+	adminKey        string
+	sessionStore    SessionStore
+	defaultProvider string
+	gemini          ai.TextGenerator
+	claude          ai.TextGenerator
 }
 
 // NewPostServer は PostServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
-func NewPostServer(posts repository.PostRepository, adminKey string, sessionStore SessionStore) *PostServer {
-	return &PostServer{posts: posts, adminKey: adminKey, sessionStore: sessionStore}
+func NewPostServer(posts repository.PostRepository, adminKey string, sessionStore SessionStore, provider string, gemini, claude ai.TextGenerator) *PostServer {
+	return &PostServer{
+		posts:           posts,
+		adminKey:        adminKey,
+		sessionStore:    sessionStore,
+		defaultProvider: strings.ToLower(strings.TrimSpace(provider)),
+		gemini:          gemini,
+		claude:          claude,
+	}
 }
 
 // ListPosts は記事一覧を返す。未認証時は status=published のみ許可。
@@ -102,7 +116,7 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 	title := strings.TrimSpace(req.Msg.GetTitle())
 	slug := strings.TrimSpace(req.Msg.GetSlug())
 	if slug == "" {
-		slug = Slugify(title)
+		slug = s.generateSlug(ctx, req.Header(), title)
 	}
 	body := req.Msg.GetBodyMarkdown()
 	summary := req.Msg.GetSummary()
@@ -128,6 +142,84 @@ func (s *PostServer) CreatePost(ctx context.Context, req *connect.Request[blogv1
 		return nil, MapHandlerError(err)
 	}
 	return connect.NewResponse(&blogv1.CreatePostResponse{Post: PostToProto(p)}), nil
+}
+
+func (s *PostServer) pickSlugGenerator(h map[string][]string) (provider string, gen ai.TextGenerator, specified bool) {
+	get := func(key string) string {
+		v := h[key]
+		if len(v) == 0 {
+			// canonical form fallback
+			v = h[http.CanonicalHeaderKey(key)]
+		}
+		if len(v) == 0 {
+			return ""
+		}
+		return v[0]
+	}
+	p := strings.ToLower(strings.TrimSpace(get("X-AI-Provider")))
+	specified = p != ""
+	if p == "" {
+		p = s.defaultProvider
+	}
+	switch p {
+	case "vertex-claude", "claude":
+		return "claude", s.claude, specified
+	case "", "vertex-gemini", "gemini":
+		return "gemini", s.gemini, specified
+	default:
+		return p, nil, specified
+	}
+}
+
+func (s *PostServer) generateSlug(ctx context.Context, header map[string][]string, title string) string {
+	// 省略時でも常に翻訳するのはコストが高くなるため、日本語（漢字/ひらがな/カタカナ）を含む場合だけ AI に問い合わせる。
+	if !containsJapanese(title) {
+		return Slugify(title)
+	}
+
+	_, gen, specified := s.pickSlugGenerator(header)
+	if specified && gen == nil {
+		// 指定されたプロバイダが無効なら安全側にフォールバック。
+		return Slugify(title)
+	}
+	if gen == nil {
+		return Slugify(title)
+	}
+
+	prompt := fmt.Sprintf(
+		"次のタイトルを、意味を反映した英語の短いURLスラグに変換してください。出力は小文字の英数字とハイフンのみ、スペース禁止、最大80文字。説明文や引用符は不要で、スラグ文字列だけを返してください。\n\nタイトル:\n%s",
+		title,
+	)
+	slugRaw, err := gen.GenerateText(ctx, prompt)
+	if err != nil {
+		return Slugify(title)
+	}
+	slugRaw = strings.TrimSpace(slugRaw)
+	if slugRaw == "" {
+		return Slugify(title)
+	}
+	// 生成物を必ず既存ルールに正規化し、バリデーションに通ることを確認して返す。
+	candidate := Slugify(slugRaw)
+	if candidate == "" || len(candidate) > 80 || !slugPattern.MatchString(candidate) {
+		return Slugify(title)
+	}
+	return candidate
+}
+
+// GenerateSlugForTitle is a thin wrapper around generateSlug.
+// It exists to allow tests in an external package (rpc_test) to verify slug generation behavior.
+func (s *PostServer) GenerateSlugForTitle(ctx context.Context, header map[string][]string, title string) string {
+	return s.generateSlug(ctx, header, title)
+}
+
+func containsJapanese(s string) bool {
+	for _, r := range s {
+		// 日本語でよく使われる表記体系を判定する（必要なら拡張可能）。
+		if unicode.Is(unicode.Han, r) || unicode.Is(unicode.Hiragana, r) || unicode.Is(unicode.Katakana, r) {
+			return true
+		}
+	}
+	return false
 }
 
 // UpdatePost は記事を更新する。管理者キー必須。

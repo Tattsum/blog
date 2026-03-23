@@ -111,7 +111,7 @@ func main() {
 			slog.Info("ai provider default", "name", "vertex-gemini")
 		}
 
-		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore))
+		postPath, postHandler := blogv1connect.NewPostServiceHandler(rpc.NewPostServer(postRepo, adminKey, sessionStore, provider, geminiGen, claudeGen))
 		tagPath, tagHandler := blogv1connect.NewTagServiceHandler(rpc.NewTagServer(tagRepo, adminKey, sessionStore))
 		aiPath, aiHandler := blogv1connect.NewAIServiceHandler(rpc.NewAIServer(adminKey, sessionStore, provider, geminiGen, claudeGen))
 		authPath, authHandler := blogv1connect.NewAuthServiceHandler(rpc.NewAuthServer(userRepo, sessionStore, 24*time.Hour))
