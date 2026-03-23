@@ -29,7 +29,6 @@ func (s *statusRecorder) statusCode() int {
 	return s.status
 }
 
-// requestLog はアクセスログを 1 行（slog）にまとめる。リクエスト/レスポンス本文は出さない。
 func requestLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rid := r.Header.Get(headerRequestID)

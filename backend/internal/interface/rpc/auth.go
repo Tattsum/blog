@@ -16,7 +16,6 @@ const (
 	bearerPrefix        = "Bearer "
 )
 
-// bearerToken は Authorization: Bearer <token> からトークン部分を返す。
 func bearerToken(header http.Header) string {
 	v := header.Get(authorizationHeader)
 	if !strings.HasPrefix(v, bearerPrefix) {
@@ -25,14 +24,10 @@ func bearerToken(header http.Header) string {
 	return strings.TrimSpace(v[len(bearerPrefix):])
 }
 
-// RequireAdminOrSession は X-Admin-Key の一致、または有効な Bearer セッションのいずれかで管理者を許可する。
-// HTTP ハンドラなど Connect 外から使う場合はこの名前で呼ぶ。
 func RequireAdminOrSession(adminKey string, header http.Header, sessionStore SessionStore) error {
 	return requireAdminOrSession(adminKey, header, sessionStore)
 }
 
-// requireAdminOrSession は X-Admin-Key の一致、または有効な Bearer セッションのいずれかで管理者を許可する。
-// sessionStore が nil の場合は Bearer チェックを行わず requireAdmin と同様にキーのみ検証する。
 func requireAdminOrSession(adminKey string, header http.Header, sessionStore SessionStore) error {
 	if adminKey != "" && header.Get(adminKeyHeader) == adminKey {
 		return nil

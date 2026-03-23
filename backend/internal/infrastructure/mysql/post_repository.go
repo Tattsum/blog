@@ -11,17 +11,14 @@ import (
 	"github.com/Tattsum/blog/backend/internal/domain/repository"
 )
 
-// PostRepository は MySQL による PostRepository の実装。
 type PostRepository struct {
 	db *sql.DB
 }
 
-// NewPostRepository は PostRepository を返す。
 func NewPostRepository(db *sql.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
-// Create は記事を1件挿入する。
 func (r *PostRepository) Create(ctx context.Context, p *post.Post) error {
 	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO posts (id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at)
@@ -35,12 +32,10 @@ func (r *PostRepository) Create(ctx context.Context, p *post.Post) error {
 	return r.replacePostTags(ctx, p.ID, p.TagIDs)
 }
 
-// GetByID は ID で記事を1件取得する。
 func (r *PostRepository) GetByID(ctx context.Context, id string) (*post.Post, error) {
 	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE id = ?`, id)
 }
 
-// GetBySlug は slug で記事を1件取得する。
 func (r *PostRepository) GetBySlug(ctx context.Context, slug post.Slug) (*post.Post, error) {
 	return r.getOne(ctx, `SELECT id, title, slug, body_markdown, summary, thumbnail_url, status, created_at, updated_at, published_at FROM posts WHERE slug = ?`, slug.String())
 }
@@ -73,7 +68,6 @@ func (r *PostRepository) getOne(ctx context.Context, query string, arg any) (*po
 	return &p, nil
 }
 
-// List は条件に応じて記事一覧と総件数を返す。
 func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFilter) ([]*post.Post, int64, error) {
 	offset := max((int64(filter.Page)-1)*int64(filter.PageSize), 0)
 	limit := filter.PageSize
@@ -167,7 +161,6 @@ func (r *PostRepository) List(ctx context.Context, filter repository.ListPostsFi
 	return list, count, nil
 }
 
-// Update は記事を1件更新する。
 func (r *PostRepository) Update(ctx context.Context, p *post.Post) error {
 	_, err := r.db.ExecContext(ctx,
 		`UPDATE posts SET title=?, slug=?, body_markdown=?, summary=?, thumbnail_url=?, status=?, updated_at=?, published_at=? WHERE id=?`,
@@ -179,13 +172,11 @@ func (r *PostRepository) Update(ctx context.Context, p *post.Post) error {
 	return r.replacePostTags(ctx, p.ID, p.TagIDs)
 }
 
-// Delete は ID で記事を1件削除する。
 func (r *PostRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM posts WHERE id = ?`, id)
 	return err
 }
 
-// Search は全文検索（LIKE）で記事一覧と総件数を返す。本番では FULLTEXT 等を検討。
 func (r *PostRepository) Search(ctx context.Context, query string, page, pageSize int32) ([]*post.Post, int64, error) {
 	offset := max((int64(page)-1)*int64(pageSize), 0)
 	if pageSize <= 0 || pageSize > 100 {
@@ -268,7 +259,6 @@ func (r *PostRepository) getTagIDsByPostIDs(ctx context.Context, postIDs []strin
 	if len(postIDs) == 0 {
 		return map[string][]string{}, nil
 	}
-	// 呼び出し元（List/Search）は pageSize<=100 を保証している前提。巨大な IN 句を避ける。
 	placeholders := strings.TrimRight(strings.Repeat("?,", len(postIDs)), ",")
 	args := make([]any, 0, len(postIDs))
 	for _, id := range postIDs {
@@ -294,7 +284,6 @@ func (r *PostRepository) getTagIDsByPostIDs(ctx context.Context, postIDs []strin
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	// ensure empty slice for posts without tags
 	for _, id := range postIDs {
 		if _, ok := out[id]; !ok {
 			out[id] = []string{}

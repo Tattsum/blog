@@ -1,5 +1,3 @@
-# golangci-lint 設定（https://golangci-lint.run）v2
-# 実行: golangci-lint run ./...
 version: "2"
 
 run:

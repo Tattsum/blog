@@ -7,17 +7,14 @@ import (
 	"github.com/Tattsum/blog/backend/internal/domain/tag"
 )
 
-// TagRepository は MySQL による TagRepository の実装。
 type TagRepository struct {
 	db *sql.DB
 }
 
-// NewTagRepository は TagRepository を返す。
 func NewTagRepository(db *sql.DB) *TagRepository {
 	return &TagRepository{db: db}
 }
 
-// Create はタグを1件挿入する。
 func (r *TagRepository) Create(ctx context.Context, t *tag.Tag) error {
 	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO tags (id, name, slug, created_at) VALUES (?, ?, ?, ?)`,
@@ -26,7 +23,6 @@ func (r *TagRepository) Create(ctx context.Context, t *tag.Tag) error {
 	return err
 }
 
-// GetByID は ID でタグを1件取得する。
 func (r *TagRepository) GetByID(ctx context.Context, id string) (*tag.Tag, error) {
 	var t tag.Tag
 	var slug string
@@ -43,7 +39,6 @@ func (r *TagRepository) GetByID(ctx context.Context, id string) (*tag.Tag, error
 	return &t, nil
 }
 
-// GetBySlug は slug でタグを1件取得する。
 func (r *TagRepository) GetBySlug(ctx context.Context, slug tag.Slug) (*tag.Tag, error) {
 	var t tag.Tag
 	var slugStr string
@@ -60,7 +55,6 @@ func (r *TagRepository) GetBySlug(ctx context.Context, slug tag.Slug) (*tag.Tag,
 	return &t, nil
 }
 
-// List はタグ一覧と総件数を返す。
 func (r *TagRepository) List(ctx context.Context, page, pageSize int32) ([]*tag.Tag, int64, error) {
 	offset := max((int64(page)-1)*int64(pageSize), 0)
 	if pageSize <= 0 || pageSize > 100 {
@@ -91,7 +85,6 @@ func (r *TagRepository) List(ctx context.Context, page, pageSize int32) ([]*tag.
 	return list, count, rows.Err()
 }
 
-// Delete は ID でタグを1件削除する。
 func (r *TagRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.ExecContext(ctx, `DELETE FROM tags WHERE id = ?`, id)
 	return err

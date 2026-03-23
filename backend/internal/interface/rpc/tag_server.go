@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TagServer は TagService の connect-go ハンドラ実装。
 type TagServer struct {
 	blogv1connect.UnimplementedTagServiceHandler
 	tags         repository.TagRepository
@@ -22,12 +21,10 @@ type TagServer struct {
 	sessionStore SessionStore
 }
 
-// NewTagServer は TagServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
 func NewTagServer(tags repository.TagRepository, adminKey string, sessionStore SessionStore) *TagServer {
 	return &TagServer{tags: tags, adminKey: adminKey, sessionStore: sessionStore}
 }
 
-// ListTags はタグ一覧を返す。
 func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.ListTagsRequest]) (*connect.Response[blogv1.ListTagsResponse], error) {
 	page := max(req.Msg.GetPage(), 1)
 	pageSize := req.Msg.GetPageSize()
@@ -48,7 +45,6 @@ func (s *TagServer) ListTags(ctx context.Context, req *connect.Request[blogv1.Li
 	}), nil
 }
 
-// CreateTag はタグを1件作成する。管理者キー必須。
 func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.CreateTagRequest]) (*connect.Response[blogv1.CreateTagResponse], error) {
 	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
@@ -77,7 +73,6 @@ func (s *TagServer) CreateTag(ctx context.Context, req *connect.Request[blogv1.C
 	return connect.NewResponse(&blogv1.CreateTagResponse{Tag: TagToProto(t)}), nil
 }
 
-// DeleteTag はタグを削除する。管理者キー必須。
 func (s *TagServer) DeleteTag(ctx context.Context, req *connect.Request[blogv1.DeleteTagRequest]) (*connect.Response[blogv1.DeleteTagResponse], error) {
 	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err

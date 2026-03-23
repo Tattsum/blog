@@ -8,7 +8,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Config は MySQL 接続設定。
 type Config struct {
 	DSN             string
 	MaxOpenConns    int
@@ -16,7 +15,6 @@ type Config struct {
 	ConnMaxLifetime time.Duration
 }
 
-// NewDB は設定に従い *sql.DB を返す。呼び出し元で Close すること。
 func NewDB(cfg Config) (*sql.DB, error) {
 	db, err := sql.Open("mysql", cfg.DSN)
 	if err != nil {

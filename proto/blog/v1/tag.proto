@@ -4,12 +4,11 @@ package blog.v1;
 
 option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
 
-// タグ
 message Tag {
   string id = 1;
   string name = 2;
   string slug = 3;
-  string created_at = 4;  // RFC3339
+  string created_at = 4;
 }
 
 message ListTagsRequest {
@@ -24,7 +23,7 @@ message ListTagsResponse {
 
 message CreateTagRequest {
   string name = 1;
-  string slug = 2;  // 省略時は name から自動生成
+  string slug = 2;
 }
 
 message CreateTagResponse {

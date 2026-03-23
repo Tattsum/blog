@@ -4,7 +4,6 @@ package blog.v1;
 
 option go_package = "github.com/Tattsum/blog/gen/blog/v1;blogv1";
 
-// 記事
 message Post {
   string id = 1;
   string title = 2;
@@ -18,17 +17,17 @@ message Post {
     PUBLISHED = 2;
   }
   Status status = 7;
-  string created_at = 8;  // RFC3339
-  string updated_at = 9;  // RFC3339
-  string published_at = 10; // RFC3339, 公開時のみ
-  string thumbnail_url = 11; // サムネイル画像の URL（任意）
+  string created_at = 8;
+  string updated_at = 9;
+  string published_at = 10;
+  string thumbnail_url = 11;
 }
 
 message ListPostsRequest {
-  int32 page = 1;       // 1-based
-  int32 page_size = 2;   // default 20, max 100
-  string status = 3;     // "published" | "draft" | ""(all, admin only)
-  string tag_id = 4;     // 指定時はこのタグに紐づく記事のみ
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string tag_id = 4;
 }
 
 message ListPostsResponse {
@@ -37,7 +36,7 @@ message ListPostsResponse {
 }
 
 message GetPostRequest {
-  string id = 1;   // 記事ID または slug
+  string id = 1;
 }
 
 message GetPostResponse {
@@ -46,11 +45,11 @@ message GetPostResponse {
 
 message CreatePostRequest {
   string title = 1;
-  string slug = 2;       // 省略時は title から自動生成
+  string slug = 2;
   string body_markdown = 3;
   string summary = 4;
   repeated string tag_ids = 5;
-  string thumbnail_url = 6; // サムネイル画像の URL（任意）
+  string thumbnail_url = 6;
 }
 
 message CreatePostResponse {
@@ -64,7 +63,7 @@ message UpdatePostRequest {
   optional string body_markdown = 4;
   optional string summary = 5;
   repeated string tag_ids = 6;
-  optional string thumbnail_url = 7; // サムネイル画像の URL（任意）
+  optional string thumbnail_url = 7;
 }
 
 message UpdatePostResponse {
@@ -78,7 +77,7 @@ message DeletePostRequest {
 message DeletePostResponse {}
 
 message SearchPostsRequest {
-  string query = 1;      // 全文検索クエリ
+  string query = 1;
   int32 page = 2;
   int32 page_size = 3;
 }
@@ -90,7 +89,7 @@ message SearchPostsResponse {
 
 message PublishPostRequest {
   string id = 1;
-  bool unpublish = 2;     // true で下書きに戻す
+  bool unpublish = 2;
 }
 
 message PublishPostResponse {

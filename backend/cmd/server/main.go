@@ -28,7 +28,6 @@ func main() {
 	addr := ":" + envOrDefault("PORT", "8080")
 
 	mux := http.NewServeMux()
-	// 生存確認: /health を本番で使用（Cloud Run は末尾 "z" のパスを予約しており /healthz は 404 になる。https://cloud.google.com/run/docs/known-issues#reserved_url_paths）
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok"))
@@ -122,7 +121,6 @@ func main() {
 		mux.Handle(authPath, authHandler)
 		slog.Info("rpc handlers registered")
 
-		// メディアアップロード: MEDIA_STORAGE=gcs のとき GCS、それ以外はローカル
 		var mediaStorage uploadapp.MediaStorage
 		switch strings.ToLower(strings.TrimSpace(os.Getenv("MEDIA_STORAGE"))) {
 		case "gcs":

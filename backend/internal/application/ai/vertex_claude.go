@@ -17,15 +17,11 @@ const (
 	maxClaudePromptRunes   = 60_000
 )
 
-// VertexClaude は Vertex AI 上の Claude（Partner）を TextGenerator として呼び出す。
-// IAM: Cloud Run 実行 SA に roles/aiplatform.user。リージョンで利用可能なモデルは GCP コンソール要確認。
 type VertexClaude struct {
 	client anthropic.Client
 	model  anthropic.Model
 }
 
-// NewVertexClaude は ADC で Vertex 上の Claude クライアントを構築する。
-// project / region が空ならエラー。model が空なら defaultClaudeModel。
 func NewVertexClaude(ctx context.Context, project, region, model string) (*VertexClaude, error) {
 	project = strings.TrimSpace(project)
 	region = strings.TrimSpace(region)
@@ -44,8 +40,6 @@ func NewVertexClaude(ctx context.Context, project, region, model string) (*Verte
 	return &VertexClaude{client: client, model: m}, nil
 }
 
-// NewVertexClaudeFromEnv は GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION（または GCP_REGION）と
-// 任意の VERTEX_CLAUDE_MODEL で VertexClaude を返す。project が無い場合は nil, nil。
 func NewVertexClaudeFromEnv(ctx context.Context) (*VertexClaude, error) {
 	project := strings.TrimSpace(os.Getenv("GOOGLE_CLOUD_PROJECT"))
 	if project == "" {
@@ -62,7 +56,6 @@ func NewVertexClaudeFromEnv(ctx context.Context) (*VertexClaude, error) {
 	return NewVertexClaude(ctx, project, region, model)
 }
 
-// GenerateText は Messages API で 1 ターンの user メッセージを送り、assistant のテキストを連結して返す。
 func (a *VertexClaude) GenerateText(ctx context.Context, prompt string) (string, error) {
 	if a == nil {
 		return "", nil

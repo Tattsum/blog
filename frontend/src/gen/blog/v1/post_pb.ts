@@ -13,8 +13,6 @@ export const file_blog_v1_post: GenFile = /*@__PURE__*/
   fileDesc("ChJibG9nL3YxL3Bvc3QucHJvdG8SB2Jsb2cudjEinwIKBFBvc3QSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDAoEc2x1ZxgDIAEoCRIVCg1ib2R5X21hcmtkb3duGAQgASgJEg8KB3N1bW1hcnkYBSABKAkSDwoHdGFnX2lkcxgGIAMoCRIkCgZzdGF0dXMYByABKA4yFC5ibG9nLnYxLlBvc3QuU3RhdHVzEhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCRIUCgxwdWJsaXNoZWRfYXQYCiABKAkSFQoNdGh1bWJuYWlsX3VybBgLIAEoCSI6CgZTdGF0dXMSFgoSU1RBVFVTX1VOU1BFQ0lGSUVEEAASCQoFRFJBRlQQARINCglQVUJMSVNIRUQQAiJTChBMaXN0UG9zdHNSZXF1ZXN0EgwKBHBhZ2UYASABKAUSEQoJcGFnZV9zaXplGAIgASgFEg4KBnN0YXR1cxgDIAEoCRIOCgZ0YWdfaWQYBCABKAkiRgoRTGlzdFBvc3RzUmVzcG9uc2USHAoFcG9zdHMYASADKAsyDS5ibG9nLnYxLlBvc3QSEwoLdG90YWxfY291bnQYAiABKAUiHAoOR2V0UG9zdFJlcXVlc3QSCgoCaWQYASABKAkiLgoPR2V0UG9zdFJlc3BvbnNlEhsKBHBvc3QYASABKAsyDS5ibG9nLnYxLlBvc3QigAEKEUNyZWF0ZVBvc3RSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgwKBHNsdWcYAiABKAkSFQoNYm9keV9tYXJrZG93bhgDIAEoCRIPCgdzdW1tYXJ5GAQgASgJEg8KB3RhZ19pZHMYBSADKAkSFQoNdGh1bWJuYWlsX3VybBgGIAEoCSIxChJDcmVhdGVQb3N0UmVzcG9uc2USGwoEcG9zdBgBIAEoCzINLmJsb2cudjEuUG9zdCLoAQoRVXBkYXRlUG9zdFJlcXVlc3QSCgoCaWQYASABKAkSEgoFdGl0bGUYAiABKAlIAIgBARIRCgRzbHVnGAMgASgJSAGIAQESGgoNYm9keV9tYXJrZG93bhgEIAEoCUgCiAEBEhQKB3N1bW1hcnkYBSABKAlIA4gBARIPCgd0YWdfaWRzGAYgAygJEhoKDXRodW1ibmFpbF91cmwYByABKAlIBIgBAUIICgZfdGl0bGVCBwoFX3NsdWdCEAoOX2JvZHlfbWFya2Rvd25CCgoIX3N1bW1hcnlCEAoOX3RodW1ibmFpbF91cmwiMQoSVXBkYXRlUG9zdFJlc3BvbnNlEhsKBHBvc3QYASABKAsyDS5ibG9nLnYxLlBvc3QiHwoRRGVsZXRlUG9zdFJlcXVlc3QSCgoCaWQYASABKAkiFAoSRGVsZXRlUG9zdFJlc3BvbnNlIkQKElNlYXJjaFBvc3RzUmVxdWVzdBINCgVxdWVyeRgBIAEoCRIMCgRwYWdlGAIgASgFEhEKCXBhZ2Vfc2l6ZRgDIAEoBSJIChNTZWFyY2hQb3N0c1Jlc3BvbnNlEhwKBXBvc3RzGAEgAygLMg0uYmxvZy52MS5Qb3N0EhMKC3RvdGFsX2NvdW50GAIgASgFIjMKElB1Ymxpc2hQb3N0UmVxdWVzdBIKCgJpZBgBIAEoCRIRCgl1bnB1Ymxpc2gYAiABKAgiMgoTUHVibGlzaFBvc3RSZXNwb25zZRIbCgRwb3N0GAEgASgLMg0uYmxvZy52MS5Qb3N0MoYECgtQb3N0U2VydmljZRJECglMaXN0UG9zdHMSGS5ibG9nLnYxLkxpc3RQb3N0c1JlcXVlc3QaGi5ibG9nLnYxLkxpc3RQb3N0c1Jlc3BvbnNlIgASPgoHR2V0UG9zdBIXLmJsb2cudjEuR2V0UG9zdFJlcXVlc3QaGC5ibG9nLnYxLkdldFBvc3RSZXNwb25zZSIAEkcKCkNyZWF0ZVBvc3QSGi5ibG9nLnYxLkNyZWF0ZVBvc3RSZXF1ZXN0GhsuYmxvZy52MS5DcmVhdGVQb3N0UmVzcG9uc2UiABJHCgpVcGRhdGVQb3N0EhouYmxvZy52MS5VcGRhdGVQb3N0UmVxdWVzdBobLmJsb2cudjEuVXBkYXRlUG9zdFJlc3BvbnNlIgASRwoKRGVsZXRlUG9zdBIaLmJsb2cudjEuRGVsZXRlUG9zdFJlcXVlc3QaGy5ibG9nLnYxLkRlbGV0ZVBvc3RSZXNwb25zZSIAEkoKC1NlYXJjaFBvc3RzEhsuYmxvZy52MS5TZWFyY2hQb3N0c1JlcXVlc3QaHC5ibG9nLnYxLlNlYXJjaFBvc3RzUmVzcG9uc2UiABJKCgtQdWJsaXNoUG9zdBIbLmJsb2cudjEuUHVibGlzaFBvc3RSZXF1ZXN0GhwuYmxvZy52MS5QdWJsaXNoUG9zdFJlc3BvbnNlIgBCLFoqZ2l0aHViLmNvbS9UYXR0c3VtL2Jsb2cvZ2VuL2Jsb2cvdjE7YmxvZ3YxYgZwcm90bzM");
 
 /**
- * 記事
- *
  * @generated from message blog.v1.Post
  */
 export type Post = Message<"blog.v1.Post"> & {
@@ -54,29 +52,21 @@ export type Post = Message<"blog.v1.Post"> & {
   status: Post_Status;
 
   /**
-   * RFC3339
-   *
    * @generated from field: string created_at = 8;
    */
   createdAt: string;
 
   /**
-   * RFC3339
-   *
    * @generated from field: string updated_at = 9;
    */
   updatedAt: string;
 
   /**
-   * RFC3339, 公開時のみ
-   *
    * @generated from field: string published_at = 10;
    */
   publishedAt: string;
 
   /**
-   * サムネイル画像の URL（任意）
-   *
    * @generated from field: string thumbnail_url = 11;
    */
   thumbnailUrl: string;
@@ -120,29 +110,21 @@ export const Post_StatusSchema: GenEnum<Post_Status> = /*@__PURE__*/
  */
 export type ListPostsRequest = Message<"blog.v1.ListPostsRequest"> & {
   /**
-   * 1-based
-   *
    * @generated from field: int32 page = 1;
    */
   page: number;
 
   /**
-   * default 20, max 100
-   *
    * @generated from field: int32 page_size = 2;
    */
   pageSize: number;
 
   /**
-   * "published" | "draft" | ""(all, admin only)
-   *
    * @generated from field: string status = 3;
    */
   status: string;
 
   /**
-   * 指定時はこのタグに紐づく記事のみ
-   *
    * @generated from field: string tag_id = 4;
    */
   tagId: string;
@@ -182,8 +164,6 @@ export const ListPostsResponseSchema: GenMessage<ListPostsResponse> = /*@__PURE_
  */
 export type GetPostRequest = Message<"blog.v1.GetPostRequest"> & {
   /**
-   * 記事ID または slug
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -223,8 +203,6 @@ export type CreatePostRequest = Message<"blog.v1.CreatePostRequest"> & {
   title: string;
 
   /**
-   * 省略時は title から自動生成
-   *
    * @generated from field: string slug = 2;
    */
   slug: string;
@@ -245,8 +223,6 @@ export type CreatePostRequest = Message<"blog.v1.CreatePostRequest"> & {
   tagIds: string[];
 
   /**
-   * サムネイル画像の URL（任意）
-   *
    * @generated from field: string thumbnail_url = 6;
    */
   thumbnailUrl: string;
@@ -311,8 +287,6 @@ export type UpdatePostRequest = Message<"blog.v1.UpdatePostRequest"> & {
   tagIds: string[];
 
   /**
-   * サムネイル画像の URL（任意）
-   *
    * @generated from field: optional string thumbnail_url = 7;
    */
   thumbnailUrl?: string;
@@ -377,8 +351,6 @@ export const DeletePostResponseSchema: GenMessage<DeletePostResponse> = /*@__PUR
  */
 export type SearchPostsRequest = Message<"blog.v1.SearchPostsRequest"> & {
   /**
-   * 全文検索クエリ
-   *
    * @generated from field: string query = 1;
    */
   query: string;
@@ -433,8 +405,6 @@ export type PublishPostRequest = Message<"blog.v1.PublishPostRequest"> & {
   id: string;
 
   /**
-   * true で下書きに戻す
-   *
    * @generated from field: bool unpublish = 2;
    */
   unpublish: boolean;

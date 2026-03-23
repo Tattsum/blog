@@ -10,8 +10,8 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string session_token = 1;  // セッション識別子
-  string expires_at = 2;     // RFC3339
+  string session_token = 1;
+  string expires_at = 2;
 }
 
 message LogoutRequest {}

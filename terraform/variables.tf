@@ -9,7 +9,6 @@ variable "region" {
   description = "リージョン（Cloud SQL・Cloud Run などで使用）"
 }
 
-# --- Cloud SQL ---
 variable "db_tier" {
   type        = string
   default     = "db-f1-micro"
@@ -29,14 +28,12 @@ variable "db_root_password" {
   default     = null
 }
 
-# --- Secret Manager ---
 variable "admin_api_key" {
   type        = string
   sensitive   = true
   description = "管理 API 用キー（ADMIN_API_KEY シークレットの値）"
 }
 
-# --- Cloud Run ---
 variable "cloud_run_image" {
   type        = string
   description = "Cloud Run にデプロイするコンテナイメージ（例: asia-northeast1-docker.pkg.dev/PROJECT_ID/blog-repo/blog-api:latest）"
@@ -54,8 +51,6 @@ variable "cors_allowed_origins" {
   description = "CORS で許可するオリジン（カンマ区切り。フロントのオリジン）"
 }
 
-# --- メディアストレージ（アップロード先）---
-# 未設定の場合はバックエンドのデフォルト（ローカル＝Cloud Run 上では非永続）。本番では gcs または r2 を推奨。
 variable "media_storage" {
   type        = string
   default     = ""
@@ -74,7 +69,6 @@ variable "gcs_public_base_url" {
   description = "GCS メディアの公開 URL ベース（省略時は storage.googleapis.com/bucket 形式）。Load Balancer + カスタムドメイン（例: https://asset.example.com）で配信するときに指定。末尾スラッシュなし"
 }
 
-# R2 用（media_storage=r2 のとき必須）。r2_secret_access_key は機密のため tfvars を .gitignore に含めること
 variable "r2_account_id" {
   type        = string
   default     = null

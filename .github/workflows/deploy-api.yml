@@ -1,9 +1,3 @@
-# Cloud Run（API）へのデプロイ。
-# 必要な GitHub Secrets: GCP_PROJECT_ID, GCP_SA_KEY
-# マイグレーション用: MIGRATION_PASSWORD（推奨・migrate のパスワード＝tfvars の db_root_password。URL エンコード不要）または MIGRATION_DSN（全文を指定する場合）
-# 任意: GCP_REGION（未設定時は asia-northeast1）、IMAGE_NAME（Artifact イメージ名・既定 blog-api）
-# 任意: CLOUD_RUN_SERVICE_NAME（未設定時は blog-backend。terraform.tfvars の cloud_run_service_name と揃える）
-# デプロイ用サービスアカウントに Cloud SQL Client ロールが必要（マイグレーション実行のため）。
 name: Deploy API (Cloud Run)
 
 on:
@@ -55,7 +49,6 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # マイグレーションが変更されたときだけ実行する（無駄な Cloud SQL 接続/時間を削減）
           if git diff --name-only "$BEFORE" "$AFTER" | grep -q '^backend/db/migrations/'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
@@ -73,7 +66,6 @@ jobs:
           MIGRATION_DSN: ${{ secrets.MIGRATION_DSN }}
         run: |
           set -e
-          # MIGRATION_PASSWORD があれば DSN を組み立て（パスワードを URL エンコード）。なければ MIGRATION_DSN をそのまま使用
           if [ -n "$MIGRATION_PASSWORD" ]; then
             MIGRATION_DSN="mysql://migrate:$(python3 -c "import urllib.parse, os; p=os.environ.get('MIGRATION_PASSWORD',''); print(urllib.parse.quote(p, safe=''))")@tcp(127.0.0.1:3306)/blog?parseTime=true"
           fi
@@ -81,16 +73,13 @@ jobs:
             echo "MIGRATION_PASSWORD or MIGRATION_DSN not set, skipping migrations"
             exit 0
           fi
-          # Cloud SQL Auth Proxy をダウンロード
           PROXY_VER="2.14.2"
           curl -sSLo cloud-sql-proxy "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VER}/cloud-sql-proxy.linux.amd64"
           chmod +x cloud-sql-proxy
-          # プロキシを起動（バックグラウンド）
           ./cloud-sql-proxy --port 3306 "$CONNECTION_NAME" &
           PROXY_PID=$!
           trap "kill $PROXY_PID 2>/dev/null || true" EXIT
           sleep 5
-          # golang-migrate でマイグレーション実行
           curl -sSL https://github.com/golang-migrate/migrate/releases/download/v4.18.0/migrate.linux-amd64.tar.gz | tar xz -C /tmp
           /tmp/migrate -path backend/db/migrations -database "$MIGRATION_DSN" up
           kill $PROXY_PID 2>/dev/null || true
@@ -115,9 +104,6 @@ jobs:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME || 'blog-api' }}
           SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME || 'blog-backend' }}
         run: |
-          # SERVICE_NAME は terraform.tfvars の cloud_run_service_name と一致させること。
-          # Cloud Run の設定（Secret, Cloud SQL, env）は Terraform（google_cloud_run_v2_service.blog_api）が唯一のソース・オブ・トゥルース。
-          # CI では「イメージのみ」更新し、それ以外の設定は上書きしない。
           gcloud run deploy ${SERVICE_NAME} \
             --project=${PROJECT_ID} \
             --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/blog-repo/${IMAGE_NAME}:${GITHUB_SHA} \

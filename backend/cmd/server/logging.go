@@ -5,8 +5,6 @@ import (
 	"os"
 )
 
-// initLogging は stderr へ JSON またはテキストで slog を出す。
-// Cloud Run では K_SERVICE が付くため JSON をデフォルトにし、ローカルでテキストにしたい場合は LOG_FORMAT=text。
 func initLogging() {
 	var h slog.Handler
 	if useJSONLog() {
@@ -24,6 +22,5 @@ func useJSONLog() bool {
 	if os.Getenv("LOG_FORMAT") == "json" {
 		return true
 	}
-	// Cloud Run / GKE などでは JSON のほうが Cloud Logging で扱いやすい
 	return os.Getenv("K_SERVICE") != "" || os.Getenv("K_REVISION") != ""
 }

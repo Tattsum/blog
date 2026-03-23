@@ -39,15 +39,11 @@ export const LoginRequestSchema: GenMessage<LoginRequest> = /*@__PURE__*/
  */
 export type LoginResponse = Message<"blog.v1.LoginResponse"> & {
   /**
-   * セッション識別子
-   *
    * @generated from field: string session_token = 1;
    */
   sessionToken: string;
 
   /**
-   * RFC3339
-   *
    * @generated from field: string expires_at = 2;
    */
   expiresAt: string;

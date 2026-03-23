@@ -12,8 +12,6 @@ import (
 	"github.com/Tattsum/blog/gen/blog/v1/blogv1connect"
 )
 
-// AIServer は AIService の connect-go ハンドラ実装。
-// generator が nil のときはローカル要約／プレースホルダにフォールバックする。
 type AIServer struct {
 	blogv1connect.UnimplementedAIServiceHandler
 	adminKey        string
@@ -23,10 +21,6 @@ type AIServer struct {
 	claude          ai.TextGenerator
 }
 
-// NewAIServer は AIServer を返す。認証は X-Admin-Key または Bearer セッションのいずれかで行う。
-// provider はデフォルトの AI プロバイダ（env AI_PROVIDER を想定）。
-// 管理画面からの切り替えはリクエストヘッダ X-AI-Provider（gemini / claude）で行う。
-// generator が nil の場合はローカル要約／プレースホルダにフォールバックする。
 func NewAIServer(adminKey string, sessionStore SessionStore, provider string, gemini, claude ai.TextGenerator) *AIServer {
 	return &AIServer{
 		adminKey:        adminKey,
@@ -41,7 +35,6 @@ func (s *AIServer) pickGenerator(h map[string][]string) (provider string, gen ai
 	get := func(key string) string {
 		v := h[key]
 		if len(v) == 0 {
-			// canonical form fallback
 			v = h[http.CanonicalHeaderKey(key)]
 		}
 		if len(v) == 0 {
@@ -64,7 +57,6 @@ func (s *AIServer) pickGenerator(h map[string][]string) (provider string, gen ai
 	}
 }
 
-// Summarize は本文の先頭から指定文数ぶんの文を抽出する簡易要約を行う。
 func (s *AIServer) Summarize(ctx context.Context, req *connect.Request[blogv1.SummarizeRequest]) (*connect.Response[blogv1.SummarizeResponse], error) {
 	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
@@ -96,7 +88,6 @@ func (s *AIServer) Summarize(ctx context.Context, req *connect.Request[blogv1.Su
 	return connect.NewResponse(&blogv1.SummarizeResponse{Summary: summary}), nil
 }
 
-// DraftSupport は現在の本文に対して、プロンプトを前置した提案本文を返す簡易実装。
 func (s *AIServer) DraftSupport(ctx context.Context, req *connect.Request[blogv1.DraftSupportRequest]) (*connect.Response[blogv1.DraftSupportResponse], error) {
 	if err := requireAdminOrSession(s.adminKey, req.Header(), s.sessionStore); err != nil {
 		return nil, err
@@ -141,7 +132,6 @@ func (s *AIServer) DraftSupport(ctx context.Context, req *connect.Request[blogv1
 	}), nil
 }
 
-// summarizeText は句点や改行で区切って最大 n 文を返す。
 func summarizeText(text string, n int) string {
 	separators := []string{"。", "．", ".", "！", "!", "？", "?"}
 	for _, sep := range separators {

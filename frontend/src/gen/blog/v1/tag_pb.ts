@@ -13,8 +13,6 @@ export const file_blog_v1_tag: GenFile = /*@__PURE__*/
   fileDesc("ChFibG9nL3YxL3RhZy5wcm90bxIHYmxvZy52MSJBCgNUYWcSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIMCgRzbHVnGAMgASgJEhIKCmNyZWF0ZWRfYXQYBCABKAkiMgoPTGlzdFRhZ3NSZXF1ZXN0EgwKBHBhZ2UYASABKAUSEQoJcGFnZV9zaXplGAIgASgFIkMKEExpc3RUYWdzUmVzcG9uc2USGgoEdGFncxgBIAMoCzIMLmJsb2cudjEuVGFnEhMKC3RvdGFsX2NvdW50GAIgASgFIi4KEENyZWF0ZVRhZ1JlcXVlc3QSDAoEbmFtZRgBIAEoCRIMCgRzbHVnGAIgASgJIi4KEUNyZWF0ZVRhZ1Jlc3BvbnNlEhkKA3RhZxgBIAEoCzIMLmJsb2cudjEuVGFnIh4KEERlbGV0ZVRhZ1JlcXVlc3QSCgoCaWQYASABKAkiEwoRRGVsZXRlVGFnUmVzcG9uc2Uy2wEKClRhZ1NlcnZpY2USQQoITGlzdFRhZ3MSGC5ibG9nLnYxLkxpc3RUYWdzUmVxdWVzdBoZLmJsb2cudjEuTGlzdFRhZ3NSZXNwb25zZSIAEkQKCUNyZWF0ZVRhZxIZLmJsb2cudjEuQ3JlYXRlVGFnUmVxdWVzdBoaLmJsb2cudjEuQ3JlYXRlVGFnUmVzcG9uc2UiABJECglEZWxldGVUYWcSGS5ibG9nLnYxLkRlbGV0ZVRhZ1JlcXVlc3QaGi5ibG9nLnYxLkRlbGV0ZVRhZ1Jlc3BvbnNlIgBCLFoqZ2l0aHViLmNvbS9UYXR0c3VtL2Jsb2cvZ2VuL2Jsb2cvdjE7YmxvZ3YxYgZwcm90bzM");
 
 /**
- * タグ
- *
  * @generated from message blog.v1.Tag
  */
 export type Tag = Message<"blog.v1.Tag"> & {
@@ -34,8 +32,6 @@ export type Tag = Message<"blog.v1.Tag"> & {
   slug: string;
 
   /**
-   * RFC3339
-   *
    * @generated from field: string created_at = 4;
    */
   createdAt: string;
@@ -102,8 +98,6 @@ export type CreateTagRequest = Message<"blog.v1.CreateTagRequest"> & {
   name: string;
 
   /**
-   * 省略時は name から自動生成
-   *
    * @generated from field: string slug = 2;
    */
   slug: string;

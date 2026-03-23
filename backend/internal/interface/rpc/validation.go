@@ -12,7 +12,6 @@ var slugPattern = regexp.MustCompile(`^[a-z0-9]+(?:[-_][a-z0-9]+)*$`)
 
 const maxThumbnailURLLen = 1024
 
-// validateThumbnailURL はサムネイル URL を検証する。空の場合は有効。http/https のみ、長さ上限 1024。
 func validateThumbnailURL(s string) error {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -33,7 +32,6 @@ func validateThumbnailURL(s string) error {
 	}
 }
 
-// validatePostFields は記事の入力値を検証する。
 func validatePostFields(title, slug, body, summary, thumbnailURL string, tagIDs []string) error {
 	titleLen := utf8.RuneCountInString(title)
 	if titleLen == 0 || titleLen > 120 {

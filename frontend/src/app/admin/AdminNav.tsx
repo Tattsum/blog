@@ -22,7 +22,6 @@ export function AdminNav() {
       try {
         await admin.authClient.logout({});
       } catch {
-        // 無視
       }
     }
     admin.clearSession();
@@ -34,7 +33,6 @@ export function AdminNav() {
     if (typeof window === "undefined") return;
     if (v) window.sessionStorage.setItem(AI_PROVIDER_STORAGE_KEY, v);
     else window.sessionStorage.removeItem(AI_PROVIDER_STORAGE_KEY);
-    // 管理画面の状態は維持しつつ、次回の AI 呼び出しからヘッダに反映される
     router.refresh();
   };
 

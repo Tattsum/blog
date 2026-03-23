@@ -1,6 +1,3 @@
-# Secret Manager: シークレットリソースと初回バージョン
-# 値は Terraform の variable から注入（tfvars は .gitignore 推奨）
-
 resource "google_secret_manager_secret" "database_dsn" {
   secret_id = "DATABASE_DSN"
   project   = var.project_id
@@ -29,7 +26,6 @@ resource "google_secret_manager_secret_version" "admin_api_key" {
   secret_data = var.admin_api_key
 }
 
-# Cloud Run の実行用サービスアカウント（デフォルトの Compute SA）に Secret 参照権限を付与
 resource "google_secret_manager_secret_iam_member" "database_dsn" {
   secret_id = google_secret_manager_secret.database_dsn.id
   role      = "roles/secretmanager.secretAccessor"

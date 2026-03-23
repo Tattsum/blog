@@ -34,8 +34,22 @@ func TestMapHandlerError_wrapsPlainError(t *testing.T) {
 	if ce.Code() != connect.CodeInternal {
 		t.Fatalf("code: got %v want %v", ce.Code(), connect.CodeInternal)
 	}
-	// 元のエラー文言はクライアントに見せない
 	if ce.Message() == plain.Error() {
 		t.Fatal("must not expose underlying error message")
+	}
+}
+
+func TestMapHandlerError_vertexPublisherModelNoAccess(t *testing.T) {
+	plain := errors.New(`Publisher Model foo does not have access`)
+	out := MapHandlerError(plain)
+	if out == nil {
+		t.Fatal("expected error")
+	}
+	ce, ok := out.(*connect.Error)
+	if !ok {
+		t.Fatalf("expected *connect.Error, got %T", out)
+	}
+	if ce.Code() != connect.CodeFailedPrecondition {
+		t.Fatalf("code: got %v want %v", ce.Code(), connect.CodeFailedPrecondition)
 	}
 }

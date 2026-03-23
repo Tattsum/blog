@@ -22,7 +22,6 @@ var (
 
 const defaultSessionDur = 24 * time.Hour
 
-// AuthServer は AuthService の connect-go ハンドラ実装。
 type AuthServer struct {
 	blogv1connect.UnimplementedAuthServiceHandler
 	userRepo        repository.UserRepository
@@ -30,7 +29,6 @@ type AuthServer struct {
 	sessionDuration time.Duration
 }
 
-// NewAuthServer は AuthServer を返す。
 func NewAuthServer(userRepo repository.UserRepository, sessionStore SessionStore, sessionDuration time.Duration) *AuthServer {
 	if sessionDuration <= 0 {
 		sessionDuration = defaultSessionDur
@@ -42,7 +40,6 @@ func NewAuthServer(userRepo repository.UserRepository, sessionStore SessionStore
 	}
 }
 
-// Login はメール・パスワードで認証し、セッショントークンを返す。
 func (s *AuthServer) Login(ctx context.Context, req *connect.Request[blogv1.LoginRequest]) (*connect.Response[blogv1.LoginResponse], error) {
 	email := strings.TrimSpace(req.Msg.GetEmail())
 	password := req.Msg.GetPassword()
@@ -64,7 +61,6 @@ func (s *AuthServer) Login(ctx context.Context, req *connect.Request[blogv1.Logi
 	}), nil
 }
 
-// Logout はリクエストに含まれる Bearer トークンを無効化する。
 func (s *AuthServer) Logout(ctx context.Context, req *connect.Request[blogv1.LogoutRequest]) (*connect.Response[blogv1.LogoutResponse], error) {
 	token := bearerToken(req.Header())
 	if token != "" {
@@ -73,7 +69,6 @@ func (s *AuthServer) Logout(ctx context.Context, req *connect.Request[blogv1.Log
 	return connect.NewResponse(&blogv1.LogoutResponse{}), nil
 }
 
-// GetMe は Authorization: Bearer <token> からセッションを解決し、現在のユーザ情報を返す。
 func (s *AuthServer) GetMe(ctx context.Context, req *connect.Request[blogv1.GetMeRequest]) (*connect.Response[blogv1.GetMeResponse], error) {
 	token := bearerToken(req.Header())
 	if token == "" {

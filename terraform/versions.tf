@@ -12,9 +12,4 @@ terraform {
     }
   }
 
-  # 本番では GCS バックエンドを推奨（state の共有・ロック）
-  # backend "gcs" {
-  #   bucket = "your-tfstate-bucket"
-  #   prefix = "blog"
-  # }
 }

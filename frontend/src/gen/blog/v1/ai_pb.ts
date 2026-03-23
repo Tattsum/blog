@@ -17,15 +17,11 @@ export const file_blog_v1_ai: GenFile = /*@__PURE__*/
  */
 export type SummarizeRequest = Message<"blog.v1.SummarizeRequest"> & {
   /**
-   * 要約対象の本文
-   *
    * @generated from field: string text = 1;
    */
   text: string;
 
   /**
-   * 省略時は 3
-   *
    * @generated from field: int32 max_sentences = 2;
    */
   maxSentences: number;
@@ -60,15 +56,11 @@ export const SummarizeResponseSchema: GenMessage<SummarizeResponse> = /*@__PURE_
  */
 export type DraftSupportRequest = Message<"blog.v1.DraftSupportRequest"> & {
   /**
-   * ユーザーの指示（例: 「結論を強くして」）
-   *
    * @generated from field: string prompt = 1;
    */
   prompt: string;
 
   /**
-   * 現在の本文
-   *
    * @generated from field: string current_body = 2;
    */
   currentBody: string;
@@ -86,8 +78,6 @@ export const DraftSupportRequestSchema: GenMessage<DraftSupportRequest> = /*@__P
  */
 export type DraftSupportResponse = Message<"blog.v1.DraftSupportResponse"> & {
   /**
-   * AI が提案する本文
-   *
    * @generated from field: string suggested_body = 1;
    */
   suggestedBody: string;

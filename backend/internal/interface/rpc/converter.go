@@ -23,7 +23,6 @@ func postStatusToProto(s post.Status) blogv1.Post_Status {
 	}
 }
 
-// PostToProto はドメインの Post を API 用の proto Post に変換する。
 func PostToProto(p *post.Post) *blogv1.Post {
 	if p == nil {
 		return nil
@@ -46,7 +45,6 @@ func PostToProto(p *post.Post) *blogv1.Post {
 	return out
 }
 
-// TagToProto はドメインの Tag を API 用の proto Tag に変換する。
 func TagToProto(t *tag.Tag) *blogv1.Tag {
 	if t == nil {
 		return nil

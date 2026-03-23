@@ -1,4 +1,3 @@
-# Docker / CI の Go ビルド用。Node 不要で gen/ のみ生成する。
 version: v2
 
 plugins:

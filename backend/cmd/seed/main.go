@@ -1,5 +1,3 @@
-// 初回管理者ユーザを users テーブルに登録するシードコマンド。
-// 使用例: SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD=yourpassword DATABASE_DSN="..." go run ./backend/cmd/seed
 package main
 
 import (

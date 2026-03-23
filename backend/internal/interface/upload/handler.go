@@ -12,19 +12,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// Handler は POST /upload で multipart ファイルを受け取り、ストレージに保存して公開 URL を JSON で返す。
 type Handler struct {
 	storage      uploadapp.MediaStorage
 	adminKey     string
 	sessionStore rpc.SessionStore
 }
 
-// NewHandler は Handler を返す。
 func NewHandler(storage uploadapp.MediaStorage, adminKey string, sessionStore rpc.SessionStore) *Handler {
 	return &Handler{storage: storage, adminKey: adminKey, sessionStore: sessionStore}
 }
 
-// ServeHTTP は POST のみ受け付ける。multipart form の "file" を保存し、{"url": "..."} を返す。
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -39,7 +36,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 10MB + 100MB より少し大きめで multipart を制限（本体は後で ValidateMedia でチェック）
 	const maxMultipartMem = 110 << 20
 	if err := r.ParseMultipartForm(maxMultipartMem); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid multipart form")
@@ -78,7 +74,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusInternalServerError, "upload failed")
 		return
 	}
-	// 相対パスで返ってきた場合はリクエストの scheme+host を前置
 	if strings.HasPrefix(publicURL, "/") && r.URL != nil {
 		scheme := "https"
 		if r.TLS == nil {
