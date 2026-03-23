@@ -10,6 +10,6 @@
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "^2.11.0",
-    "markdownlint-cli2": "^0.21.0"
+    "markdownlint-cli2": "^0.22.0"
   }
 }
