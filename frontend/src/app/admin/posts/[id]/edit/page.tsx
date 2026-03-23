@@ -167,6 +167,19 @@ function EditPostForm() {
     }
   }
 
+  function AiThinking({ text }: { text: string }) {
+    return (
+      <span className="ai-thinking" role="status" aria-live="polite">
+        {text}
+        <span className="ai-dots" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+      </span>
+    );
+  }
+
   function applySuggestedBody() {
     if (!suggestedBody) return;
     setBodyMarkdown(suggestedBody);
@@ -284,7 +297,7 @@ function EditPostForm() {
             className="admin-btn-secondary"
             style={{ marginTop: 8 }}
           >
-            {aiBusy ? "要約生成中…" : "本文から要約を生成"}
+            {aiBusy ? <AiThinking text="AIが考えています" /> : "本文から要約を生成"}
           </button>
         </div>
         <div className="admin-form-group">
@@ -342,7 +355,7 @@ function EditPostForm() {
             className="admin-btn-secondary"
             style={{ marginBottom: 8 }}
           >
-            {aiBusy ? "提案取得中…" : "提案本文を取得"}
+            {aiBusy ? <AiThinking text="AIが下書きを考えています" /> : "提案本文を取得"}
           </button>
           {suggestedBody && (
             <>

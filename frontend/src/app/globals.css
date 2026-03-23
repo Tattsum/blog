@@ -684,3 +684,50 @@ textarea:focus-visible,
   gap: 16px;
   max-width: 600px;
 }
+
+/* AI 処理中のアニメーション（管理画面） */
+.ai-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.ai-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--muted);
+  animation: aiDotPulse 1s infinite ease-in-out;
+}
+
+.ai-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ai-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes aiDotPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-dots span {
+    animation: none;
+  }
+}
