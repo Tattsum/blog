@@ -70,7 +70,6 @@ func TestPostServer_generateSlug_fallbackOnInvalidAIOutput(t *testing.T) {
 
 func TestPostServer_generateSlug_returnsNormalizedCandidate(t *testing.T) {
 	s := rpcpkg.NewPostServer(nil, "", nil, "gemini", fakeTextGenerator{
-		// 生成物に大文字等が混じっていても Slugify で正規化される想定。
 		out: "Hello 日本語 World",
 	}, nil)
 
@@ -78,6 +77,4 @@ func TestPostServer_generateSlug_returnsNormalizedCandidate(t *testing.T) {
 	if got == "" || len(got) > 80 || !slugPattern.MatchString(got) {
 		t.Fatalf("generateSlug returned invalid slug: %q", got)
 	}
-
-	// Slugify によって少なくとも空ではなく、バリデーション通過することを確認する。
 }

@@ -148,7 +148,6 @@ func (s *PostServer) pickSlugGenerator(h map[string][]string) (provider string, 
 	get := func(key string) string {
 		v := h[key]
 		if len(v) == 0 {
-			// canonical form fallback
 			v = h[http.CanonicalHeaderKey(key)]
 		}
 		if len(v) == 0 {
@@ -172,14 +171,12 @@ func (s *PostServer) pickSlugGenerator(h map[string][]string) (provider string, 
 }
 
 func (s *PostServer) generateSlug(ctx context.Context, header map[string][]string, title string) string {
-	// 省略時でも常に翻訳するのはコストが高くなるため、日本語（漢字/ひらがな/カタカナ）を含む場合だけ AI に問い合わせる。
 	if !containsJapanese(title) {
 		return Slugify(title)
 	}
 
 	_, gen, specified := s.pickSlugGenerator(header)
 	if specified && gen == nil {
-		// 指定されたプロバイダが無効なら安全側にフォールバック。
 		return Slugify(title)
 	}
 	if gen == nil {
@@ -198,7 +195,6 @@ func (s *PostServer) generateSlug(ctx context.Context, header map[string][]strin
 	if slugRaw == "" {
 		return Slugify(title)
 	}
-	// 生成物を必ず既存ルールに正規化し、バリデーションに通ることを確認して返す。
 	candidate := Slugify(slugRaw)
 	if candidate == "" || len(candidate) > 80 || !slugPattern.MatchString(candidate) {
 		return Slugify(title)
@@ -206,15 +202,12 @@ func (s *PostServer) generateSlug(ctx context.Context, header map[string][]strin
 	return candidate
 }
 
-// GenerateSlugForTitle is a thin wrapper around generateSlug.
-// It exists to allow tests in an external package (rpc_test) to verify slug generation behavior.
 func (s *PostServer) GenerateSlugForTitle(ctx context.Context, header map[string][]string, title string) string {
 	return s.generateSlug(ctx, header, title)
 }
 
 func containsJapanese(s string) bool {
 	for _, r := range s {
-		// 日本語でよく使われる表記体系を判定する（必要なら拡張可能）。
 		if unicode.Is(unicode.Han, r) || unicode.Is(unicode.Hiragana, r) || unicode.Is(unicode.Katakana, r) {
 			return true
 		}
