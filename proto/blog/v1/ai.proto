@@ -22,7 +22,16 @@ message DraftSupportResponse {
   string suggested_body = 1;
 }
 
+message ProofreadRequest {
+  string text = 1;
+}
+
+message ProofreadResponse {
+  string report = 1;
+}
+
 service AIService {
   rpc Summarize(SummarizeRequest) returns (SummarizeResponse) {}
   rpc DraftSupport(DraftSupportRequest) returns (DraftSupportResponse) {}
+  rpc Proofread(ProofreadRequest) returns (ProofreadResponse) {}
 }

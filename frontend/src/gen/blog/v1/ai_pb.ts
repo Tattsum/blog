@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file blog/v1/ai.proto.
  */
 export const file_blog_v1_ai: GenFile = /*@__PURE__*/
-  fileDesc("ChBibG9nL3YxL2FpLnByb3RvEgdibG9nLnYxIjcKEFN1bW1hcml6ZVJlcXVlc3QSDAoEdGV4dBgBIAEoCRIVCg1tYXhfc2VudGVuY2VzGAIgASgFIiQKEVN1bW1hcml6ZVJlc3BvbnNlEg8KB3N1bW1hcnkYASABKAkiOwoTRHJhZnRTdXBwb3J0UmVxdWVzdBIOCgZwcm9tcHQYASABKAkSFAoMY3VycmVudF9ib2R5GAIgASgJIi4KFERyYWZ0U3VwcG9ydFJlc3BvbnNlEhYKDnN1Z2dlc3RlZF9ib2R5GAEgASgJMqABCglBSVNlcnZpY2USRAoJU3VtbWFyaXplEhkuYmxvZy52MS5TdW1tYXJpemVSZXF1ZXN0GhouYmxvZy52MS5TdW1tYXJpemVSZXNwb25zZSIAEk0KDERyYWZ0U3VwcG9ydBIcLmJsb2cudjEuRHJhZnRTdXBwb3J0UmVxdWVzdBodLmJsb2cudjEuRHJhZnRTdXBwb3J0UmVzcG9uc2UiAEIsWipnaXRodWIuY29tL1RhdHRzdW0vYmxvZy9nZW4vYmxvZy92MTtibG9ndjFiBnByb3RvMw");
+  fileDesc("ChBibG9nL3YxL2FpLnByb3RvEgdibG9nLnYxIjcKEFN1bW1hcml6ZVJlcXVlc3QSDAoEdGV4dBgBIAEoCRIVCg1tYXhfc2VudGVuY2VzGAIgASgFIiQKEVN1bW1hcml6ZVJlc3BvbnNlEg8KB3N1bW1hcnkYASABKAkiOwoTRHJhZnRTdXBwb3J0UmVxdWVzdBIOCgZwcm9tcHQYASABKAkSFAoMY3VycmVudF9ib2R5GAIgASgJIi4KFERyYWZ0U3VwcG9ydFJlc3BvbnNlEhYKDnN1Z2dlc3RlZF9ib2R5GAEgASgJIiAKEFByb29mcmVhZFJlcXVlc3QSDAoEdGV4dBgBIAEoCSIjChFQcm9vZnJlYWRSZXNwb25zZRIOCgZyZXBvcnQYASABKAky5gEKCUFJU2VydmljZRJECglTdW1tYXJpemUSGS5ibG9nLnYxLlN1bW1hcml6ZVJlcXVlc3QaGi5ibG9nLnYxLlN1bW1hcml6ZVJlc3BvbnNlIgASTQoMRHJhZnRTdXBwb3J0EhwuYmxvZy52MS5EcmFmdFN1cHBvcnRSZXF1ZXN0Gh0uYmxvZy52MS5EcmFmdFN1cHBvcnRSZXNwb25zZSIAEkQKCVByb29mcmVhZBIZLmJsb2cudjEuUHJvb2ZyZWFkUmVxdWVzdBoaLmJsb2cudjEuUHJvb2ZyZWFkUmVzcG9uc2UiAEIsWipnaXRodWIuY29tL1RhdHRzdW0vYmxvZy9nZW4vYmxvZy92MTtibG9ndjFiBnByb3RvMw");
 
 /**
  * @generated from message blog.v1.SummarizeRequest
@@ -91,6 +91,40 @@ export const DraftSupportResponseSchema: GenMessage<DraftSupportResponse> = /*@_
   messageDesc(file_blog_v1_ai, 3);
 
 /**
+ * @generated from message blog.v1.ProofreadRequest
+ */
+export type ProofreadRequest = Message<"blog.v1.ProofreadRequest"> & {
+  /**
+   * @generated from field: string text = 1;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message blog.v1.ProofreadRequest.
+ * Use `create(ProofreadRequestSchema)` to create a new message.
+ */
+export const ProofreadRequestSchema: GenMessage<ProofreadRequest> = /*@__PURE__*/
+  messageDesc(file_blog_v1_ai, 4);
+
+/**
+ * @generated from message blog.v1.ProofreadResponse
+ */
+export type ProofreadResponse = Message<"blog.v1.ProofreadResponse"> & {
+  /**
+   * @generated from field: string report = 1;
+   */
+  report: string;
+};
+
+/**
+ * Describes the message blog.v1.ProofreadResponse.
+ * Use `create(ProofreadResponseSchema)` to create a new message.
+ */
+export const ProofreadResponseSchema: GenMessage<ProofreadResponse> = /*@__PURE__*/
+  messageDesc(file_blog_v1_ai, 5);
+
+/**
  * @generated from service blog.v1.AIService
  */
 export const AIService: GenService<{
@@ -109,6 +143,14 @@ export const AIService: GenService<{
     methodKind: "unary";
     input: typeof DraftSupportRequestSchema;
     output: typeof DraftSupportResponseSchema;
+  },
+  /**
+   * @generated from rpc blog.v1.AIService.Proofread
+   */
+  proofread: {
+    methodKind: "unary";
+    input: typeof ProofreadRequestSchema;
+    output: typeof ProofreadResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_blog_v1_ai, 0);

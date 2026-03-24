@@ -7,6 +7,8 @@ import { useAdmin } from "../../AdminProvider";
 import { AdminGate } from "../../AdminGate";
 import { uploadMedia } from "@/lib/admin-api";
 import { toAdminErrorMessage } from "@/lib/admin-error";
+import { buildProofreadText } from "@/lib/admin-proofread";
+import { AiThinking } from "../../AiThinking";
 
 export default function NewPostPage() {
   return (
@@ -27,12 +29,40 @@ function NewPostForm() {
   const [tagIds, setTagIds] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [aiKind, setAiKind] = useState<"proofread" | null>(null);
+  const [proofreadReport, setProofreadReport] = useState("");
   const [uploadingThumb, setUploadingThumb] = useState(false);
   const [uploadThumbError, setUploadThumbError] = useState("");
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const bodyInputRef = useRef<HTMLTextAreaElement>(null);
 
   const client = admin?.postClient;
+  const aiClient = admin?.aiClient;
+  const aiUnavailableMessage =
+    "AI 機能を利用するにはログイン状態を確認してください。";
+
+  async function handleProofread() {
+    if (!aiClient) {
+      setError(aiUnavailableMessage);
+      return;
+    }
+    const text = buildProofreadText(title, bodyMarkdown, summary);
+    if (!text) {
+      setError("タイトル・本文・要約のいずれかを入力してから校正を実行してください。");
+      return;
+    }
+    setProofreadReport("");
+    setError("");
+    setAiKind("proofread");
+    try {
+      const res = await aiClient.proofread({ text });
+      setProofreadReport(res.report ?? "");
+    } catch (e) {
+      setError(toAdminErrorMessage(e, "校正の取得に失敗しました"));
+    } finally {
+      setAiKind(null);
+    }
+  }
 
   async function handleThumbUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -168,6 +198,33 @@ function NewPostForm() {
             rows={3}
             className="admin-textarea"
           />
+          <button
+            type="button"
+            onClick={handleProofread}
+            disabled={submitting || aiKind !== null || !aiClient}
+            title={!aiClient ? "ログインまたは管理者キーが必要です" : undefined}
+            className="admin-btn-secondary"
+            style={{ marginTop: 8 }}
+          >
+            {aiKind === "proofread" ? (
+              <AiThinking text="AIが校正しています" />
+            ) : (
+              "タイトル・本文・要約を校正"
+            )}
+          </button>
+          {proofreadReport && (
+            <div style={{ marginTop: 12 }}>
+              <label className="admin-muted" style={{ display: "block", marginBottom: 4 }}>
+                校正結果
+              </label>
+              <textarea
+                value={proofreadReport}
+                readOnly
+                rows={8}
+                className="admin-textarea mono"
+              />
+            </div>
+          )}
         </div>
         <div className="admin-form-group">
           <label>サムネイル URL（任意）</label>

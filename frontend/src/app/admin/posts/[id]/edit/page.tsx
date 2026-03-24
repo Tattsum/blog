@@ -8,6 +8,8 @@ import { AdminGate } from "../../../AdminGate";
 import { getUnpublishFlagForPublishButton } from "./publish-utils";
 import { uploadMedia } from "@/lib/admin-api";
 import { toAdminErrorMessage } from "@/lib/admin-error";
+import { buildProofreadText } from "@/lib/admin-proofread";
+import { AiThinking } from "../../../AiThinking";
 import type { Post } from "@/gen/blog/v1/post_pb";
 import { Post_Status } from "@/gen/blog/v1/post_pb";
 
@@ -34,7 +36,8 @@ function EditPostForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [aiBusy, setAiBusy] = useState(false);
+  const [aiKind, setAiKind] = useState<"summarize" | "draft" | "proofread" | null>(null);
+  const [proofreadReport, setProofreadReport] = useState("");
   const [prompt, setPrompt] = useState("");
   const [suggestedBody, setSuggestedBody] = useState("");
   const [uploadingThumb, setUploadingThumb] = useState(false);
@@ -44,6 +47,8 @@ function EditPostForm() {
 
   const client = admin?.postClient;
   const aiClient = admin?.aiClient;
+  const aiUnavailableMessage =
+    "AI 機能を利用するにはログイン状態を確認してください。";
 
   useEffect(() => {
     if (!client || !id) {
@@ -126,13 +131,16 @@ function EditPostForm() {
   }
 
   async function handleSummarize() {
-    if (!aiClient) return;
+    if (!aiClient) {
+      setError(aiUnavailableMessage);
+      return;
+    }
     if (!bodyMarkdown.trim()) {
       setError("本文が空のため要約できません。");
       return;
     }
     setError("");
-    setAiBusy(true);
+    setAiKind("summarize");
     try {
       const res = await aiClient.summarize({
         text: bodyMarkdown,
@@ -142,18 +150,21 @@ function EditPostForm() {
     } catch (e) {
       setError(toAdminErrorMessage(e, "要約の生成に失敗しました"));
     } finally {
-      setAiBusy(false);
+      setAiKind(null);
     }
   }
 
   async function handleDraftSupport() {
-    if (!aiClient) return;
+    if (!aiClient) {
+      setError(aiUnavailableMessage);
+      return;
+    }
     if (!bodyMarkdown.trim()) {
       setError("本文が空のため下書き支援を実行できません。");
       return;
     }
     setError("");
-    setAiBusy(true);
+    setAiKind("draft");
     try {
       const res = await aiClient.draftSupport({
         prompt,
@@ -163,21 +174,31 @@ function EditPostForm() {
     } catch (e) {
       setError(toAdminErrorMessage(e, "下書き支援の取得に失敗しました"));
     } finally {
-      setAiBusy(false);
+      setAiKind(null);
     }
   }
 
-  function AiThinking({ text }: { text: string }) {
-    return (
-      <span className="ai-thinking" role="status" aria-live="polite">
-        {text}
-        <span className="ai-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
-      </span>
-    );
+  async function handleProofread() {
+    if (!aiClient) {
+      setError(aiUnavailableMessage);
+      return;
+    }
+    const text = buildProofreadText(title, bodyMarkdown, summary);
+    if (!text) {
+      setError("タイトル・本文・要約のいずれかを入力してから校正を実行してください。");
+      return;
+    }
+    setProofreadReport("");
+    setError("");
+    setAiKind("proofread");
+    try {
+      const res = await aiClient.proofread({ text });
+      setProofreadReport(res.report ?? "");
+    } catch (e) {
+      setError(toAdminErrorMessage(e, "校正の取得に失敗しました"));
+    } finally {
+      setAiKind(null);
+    }
   }
 
   function applySuggestedBody() {
@@ -290,15 +311,47 @@ function EditPostForm() {
             rows={3}
             className="admin-textarea"
           />
-          <button
-            type="button"
-            onClick={handleSummarize}
-            disabled={submitting || aiBusy}
-            className="admin-btn-secondary"
-            style={{ marginTop: 8 }}
-          >
-            {aiBusy ? <AiThinking text="AIが考えています" /> : "本文から要約を生成"}
-          </button>
+          <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <button
+              type="button"
+              onClick={handleSummarize}
+              disabled={submitting || aiKind !== null || !aiClient}
+              title={!aiClient ? "ログインまたは管理者キーが必要です" : undefined}
+              className="admin-btn-secondary"
+            >
+              {aiKind === "summarize" ? (
+                <AiThinking text="AIが考えています" />
+              ) : (
+                "本文から要約を生成"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleProofread}
+              disabled={submitting || aiKind !== null || !aiClient}
+              title={!aiClient ? "ログインまたは管理者キーが必要です" : undefined}
+              className="admin-btn-secondary"
+            >
+              {aiKind === "proofread" ? (
+                <AiThinking text="AIが校正しています" />
+              ) : (
+                "タイトル・本文・要約を校正"
+              )}
+            </button>
+          </div>
+          {proofreadReport && (
+            <div style={{ marginTop: 12 }}>
+              <label className="admin-muted" style={{ display: "block", marginBottom: 4 }}>
+                校正結果
+              </label>
+              <textarea
+                value={proofreadReport}
+                readOnly
+                rows={8}
+                className="admin-textarea mono"
+              />
+            </div>
+          )}
         </div>
         <div className="admin-form-group">
           <label>サムネイル URL（任意）</label>
@@ -351,11 +404,16 @@ function EditPostForm() {
           <button
             type="button"
             onClick={handleDraftSupport}
-            disabled={submitting || aiBusy}
+            disabled={submitting || aiKind !== null || !aiClient}
+            title={!aiClient ? "ログインまたは管理者キーが必要です" : undefined}
             className="admin-btn-secondary"
             style={{ marginBottom: 8 }}
           >
-            {aiBusy ? <AiThinking text="AIが下書きを考えています" /> : "提案本文を取得"}
+            {aiKind === "draft" ? (
+              <AiThinking text="AIが下書きを考えています" />
+            ) : (
+              "提案本文を取得"
+            )}
           </button>
           {suggestedBody && (
             <>

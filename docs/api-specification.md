@@ -11,7 +11,7 @@
 - `post.proto` — 記事 (PostService)
 - `tag.proto` — タグ (TagService)
 - `auth.proto` — 認証 (AuthService)
-- `ai.proto` — AI 要約・下書き支援 (AIService)
+- `ai.proto` — AI 要約・下書き支援・校正 (AIService)
 
 ### post.proto（抜粋・要約）
 
@@ -427,6 +427,35 @@ CodeUnauthenticated, CodeNotFound
 
 ---
 
+#### Proofread
+
+- **概要**: 指定テキストの誤字脱字・表記などの指摘を AI が返す。管理者認証必須。Vertex AI 等が未設定の場合は利用不可。
+
+| 種別 | フィールド | 型 | 必須/任意 | 説明 |
+| --- | --- | --- | --- | --- |
+| リクエスト | text | string | 必須 | 校正対象テキスト（空不可。長さ上限はサーバーで Unicode ルーン数により約 10 万まで。絵文字や日本語も 1 ルーンとして数える） |
+| レスポンス | report | string | 必須 | 指摘内容のレポート（プレーンテキスト） |
+
+#### Proofread — エラーコード
+
+| Code | 条件 |
+| --- | --- |
+| CodeUnauthenticated / CodePermissionDenied | 未認証または管理者キー・セッション不正 |
+| CodeInvalidArgument | text が空、または長すぎる（上限超過時はメッセージに最大ルーン数が含まれる） |
+| CodeFailedPrecondition | AI（Vertex 等）未設定、または指定した AI プロバイダが利用不可 |
+| CodeResourceExhausted | Vertex AI のレート制限超過 |
+| CodeUnavailable | Vertex AI 一時不可 |
+
+#### Proofread — リクエスト例（JSON）
+
+```json
+{
+  "text": "# タイトル\n\n本文..."
+}
+```
+
+---
+
 ## 共通事項
 
 ### 認証方式
@@ -448,5 +477,5 @@ CodeUnauthenticated, CodeNotFound
 - **HTTP/JSON 互換**: Connect の HTTP/JSON モードを前提とする。フィールド名は JSON では camelCase（例: `tagIds`, `totalCount`）となる。
 - **ページング**: `page` は 1 始まり。`page_size` の最大値は 100。指定しない場合はサービス側のデフォルト（例: 20）を用いる。
 - **日時**: すべて RFC3339 文字列（例: `2025-03-01T00:00:00Z`）。
-- **AI 利用**: Summarize / DraftSupport は Vertex AI を利用するため、レート制限・入力長制限・利用料に注意する。入力テキストはサニタイズし、出力は必要に応じて検証すること。
+- **AI 利用**: Summarize / DraftSupport / Proofread は Vertex AI 等を利用するため、レート制限・入力長制限・利用料に注意する。入力テキストはサニタイズし、出力は必要に応じて検証すること。
 - **slug**: 記事・タグの slug は URL パスに用いるため、重複不可・形式制約（英数字とハイフン等）をサーバーで検証すること。
