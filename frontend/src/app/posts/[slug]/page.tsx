@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { postClient } from "@/lib/api";
 import { Header } from "@/components/Header";
 import { MarkdownBody } from "@/components/MarkdownBody";
+import { ShareBar } from "@/components/ShareBar";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -69,6 +70,7 @@ export default async function PostPage({ params }: Props) {
             {formatDate(publishedAt)}
           </time>
         )}
+        <ShareBar title={title} path={`/posts/${encodeURIComponent(slug)}`} />
         <div className="post-body">
           <MarkdownBody>{bodyMarkdown}</MarkdownBody>
         </div>

@@ -246,6 +246,55 @@ textarea:focus-visible,
   color: var(--muted);
 }
 
+.share-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 20px;
+}
+
+.share-label {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-right: 4px;
+}
+
+.share-btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-btn:hover {
+  background: var(--code-bg);
+  text-decoration: none;
+}
+
+.share-btn:active {
+  transform: translateY(1px);
+}
+
+.share-error {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-btn:active {
+    transform: none;
+  }
+}
+
 .article-page .back-link {
   display: inline-block;
   margin-top: 32px;
