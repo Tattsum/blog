@@ -32,11 +32,11 @@
     "@types/react-dom": "^19",
     "eslint": "^10.0.0",
     "eslint-config-next": "16.1.7",
-    "typescript": "^5",
+    "typescript": "^6.0.0",
     "vitest": "^4.0.18",
     "wrangler": "^4.74.0"
   },
   "overrides": {
-    "undici": "7.24.4"
+    "undici": "8.1.0"
   }
 }
