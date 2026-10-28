@@ -20,7 +20,7 @@ jobs:
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       CONNECTION_NAME: ${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION || 'asia-northeast1' }}:blog-mysql
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
